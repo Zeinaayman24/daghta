@@ -5,7 +5,7 @@ import { AppointmentPicker, whenLabel } from '@/components/Appointment';
 import { ConfirmSheet } from '@/components/Confirm';
 import { BackBar, Btn, Empty, Icon, Loading, Muted, Photo, Pill, Press, Row, Screen, Section, Sheet, T, toast } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { ago, ar, friendlyError } from '@/lib/data';
+import { ago, ar, friendlyError, carYear } from '@/lib/data';
 import { t } from '@/lib/i18n';
 import { must, useLive } from '@/lib/live';
 import { kmLabel, serviceName, useInstallServices, type NearShop } from '@/lib/shops';
@@ -69,7 +69,7 @@ export default function InstallRequestScreen() {
           {r.photo_path ? <Photo uri={photoUrl(r.photo_path)} size={56} /> : null}
           <View style={{ flex: 1 }}>
             <T size={14.5}>{r.part_desc}</T>
-            <Muted size={13}>{[r.car_make, r.car_model, r.car_year ? ar(r.car_year) : ''].filter(Boolean).join(' ')}{' · '}{ago(r.created_at)}</Muted>
+            <Muted size={13}>{[r.car_make, r.car_model, carYear(r.car_year)].filter(Boolean).join(' ')}{' · '}{ago(r.created_at)}</Muted>
           </View>
         </Row>
         {r.notes ? <Muted size={13}>«{r.notes}»</Muted> : null}

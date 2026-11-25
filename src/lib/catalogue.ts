@@ -95,7 +95,7 @@ export const makeName = (m: Pick<Make, 'name_ar' | 'name_en'>) => (isEn() && m.n
 export const modelName = (m: Pick<Model, 'name_ar' | 'name_en'>) => (isEn() && m.name_en ? m.name_en : m.name_ar);
 /** "هيونداي فيرنا ٢٠١٤" or "Hyundai Verna 2014" from the Arabic names stored on a car or request. */
 export function carLabel(make?: string | null, model?: string | null, year?: string | number | null) {
-  const yr = year ? (isEn() ? String(year) : String(year).replace(/\d/g, (d) => '٠١٢٣٤٥٦٧٨٩'[Number(d)])) : '';
+  const yr = year ? '\u2068' + String(year) + '\u2069' : ''; // a model year stays Latin in both languages, isolated so the punctuation around it stays put
   if (!isEn()) return [make, model, yr].filter(Boolean).join(' ');
   const mk = (makesCache ?? []).find((m) => m.name_ar === make);
   const md = mk ? (modelsCache.get(mk.id) ?? []).find((m) => m.name_ar === model) : undefined;

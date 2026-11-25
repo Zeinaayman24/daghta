@@ -1,7 +1,7 @@
 import { Redirect, router } from 'expo-router';
 import { useEffect } from 'react';
 import { View } from 'react-native';
-import { BottomNav, rememberRole } from '@/components/AppHeader';
+import { BottomNav, rememberRole, InboxButton } from '@/components/AppHeader';
 import { Bell } from '@/components/Bell';
 import { Logo } from '@/components/Brand';
 import { MakeLogo } from '@/components/MakeLogo';
@@ -70,7 +70,7 @@ export default function CustomerHome() {
       <View style={{ width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 18, paddingTop: 14, paddingBottom: 26, gap: 16 }}>
         <Row style={{ justifyContent: 'space-between' }}>
           <Logo size={22} on="dark" intro />
-          <Bell light />
+          <Row gap={8}><InboxButton light /><Bell light /></Row>
         </Row>
         <View style={{ gap: 0 }}>
           <T size={14.5} color="rgba(255,255,255,.72)">{t('أهلاً يا')}{' '}{first}</T>

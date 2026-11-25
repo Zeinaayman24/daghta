@@ -1201,4 +1201,12 @@ export const EN: Record<string, string> = {
   "ضغطة شغّال والموبايل واقف": "Daghta works with the phone held upright",
   "ترحيب بالصوت": "Voice welcome",
   "بنقولك أهلاً باسمك أول ما تفتح ضغطة، مرة في اليوم": "We say hello with your name when you open Daghta, once a day",
+  "الوارد": "Inbox",
+  "نسخة تجريبية · بيانات عينة": "Preview · sample data",
+  "شوف كعميل": "View as customer",
+  "شوف كمحل": "View as shop",
+  "{0} رسائل جديدة": "{0} new messages",
+  "إمبارح": "yesterday",
+  "كم": "km",
+  "المحلات": "Shops",
 };

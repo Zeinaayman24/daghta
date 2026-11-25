@@ -1,0 +1,7 @@
+# Preview only. Builds the demo variant (in-browser sample data, no backend) and serves it at /daghta/ like production.
+# Production stays on GitHub Pages from main; this file has no effect there.
+[build]
+  command = "EXPO_PUBLIC_DEMO=1 npx expo export -p web --output-dir dist-demo && mkdir -p out/daghta && cp -r dist-demo/. out/daghta/ && printf '/  /daghta/  302\n/daghta/*  /daghta/index.html  200\n' > out/_redirects"
+  publish = "out"
+[build.environment]
+  NODE_VERSION = "20"

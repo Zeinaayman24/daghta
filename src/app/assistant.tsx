@@ -6,7 +6,7 @@ import { ChatFrame } from '@/components/chat';
 import { Loading, Muted, Screen, toast } from '@/components/ui';
 import { aiAvailable, askAi, parse, partIsSided, splitParts, type AiTurn, type Parsed } from '@/lib/assistant';
 import { useAuth } from '@/lib/auth';
-import { COMMON_PARTS, REPORT_CATEGORIES, SIDES, URGENCY, WANTED, ar, friendlyError, money, newId, reqNo, type Car, type Request } from '@/lib/data';
+import { COMMON_PARTS, REPORT_CATEGORIES, SIDES, URGENCY, WANTED, ar, friendlyError, money, newId, reqNo, type Car, type Request, carYear } from '@/lib/data';
 import { pickPhoto, uploadPhoto } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
 import { t as tr } from '@/lib/i18n';
@@ -33,7 +33,8 @@ const emptyDraft = (): Draft => ({ part: '', carKey: null, side: null, cond: nul
 const emptyC = (): CDraft => ({ category: null, requestId: null, requestAsked: false, body: '' });
 const STATUS: Record<string, string> = { open: tr('بيستقبل عروض'), chosen: tr('اتأكد مع المحل'), done: tr('اتسلّم'), cancelled: tr('اتلغى') };
 
-export default function Assistant() {
+/** The assistant conversation. Full screen at /assistant, or embedded in the floating bubble's sheet (`onClose` then replaces the back button). */
+export default function Assistant({ embedded, onClose }: { embedded?: boolean; onClose?: () => void } = {}) {
   const { ready, session, profile } = useAuth();
   const params = useLocalSearchParams<{ mode?: string; part?: string; request?: string; cond?: string; side?: string; notes?: string; ticket?: string }>();
   const str = (v: unknown) => (typeof v === 'string' ? v : '');
@@ -68,8 +69,8 @@ export default function Assistant() {
         isShop ? Promise.resolve({ data: [] as Request[] }) : supabase.from('requests').select('*').eq('customer_id', uid).order('created_at', { ascending: false }).limit(6),
       ]);
       const list: CarOpt[] = [];
-      if (profile.car_make) list.push({ key: 'main', label: `${profile.car_make} ${profile.car_model ?? ''} ${ar(profile.car_year ?? '')}`.trim(), make: profile.car_make, model: profile.car_model ?? '', year: profile.car_year ?? 0, vin: profile.car_vin ?? '' });
-      ((extra ?? []) as Car[]).forEach((c) => list.push({ key: c.id, label: `${c.make} ${c.model} ${ar(c.year)}`, make: c.make, model: c.model, year: c.year, vin: c.vin }));
+      if (profile.car_make) list.push({ key: 'main', label: `${profile.car_make} ${profile.car_model ?? ''} ${carYear(profile.car_year)}`.trim(), make: profile.car_make, model: profile.car_model ?? '', year: profile.car_year ?? 0, vin: profile.car_vin ?? '' });
+      ((extra ?? []) as Car[]).forEach((c) => list.push({ key: c.id, label: `${c.make} ${c.model} ${carYear(c.year)}`, make: c.make, model: c.model, year: c.year, vin: c.vin }));
       setCars(list);
       setRecent((reqs ?? []) as Request[]);
     })();
@@ -434,12 +435,12 @@ export default function Assistant() {
     case 'ai': chips = [...aiChips.map((c) => ({ label: c, fn: () => onText(c) })), ...menu.slice(-1)]; break;
   }
 
-  if (ready && !session) return <Redirect href="/login" />;
+  if (ready && !session) return embedded ? null : <Redirect href="/login" />;
   if (ticket) return <CaseChat key={ticket.id} id={ticket.id} fresh={ticket.fresh} />;
   if (!profile || !cars) return <Screen><Loading /></Screen>;
 
   const placeholder = step === 'c_body' ? tr('اكتب اللي حصل…') : step === 'part' ? tr('اسم القطعة…') : step === 'budget' ? tr('المبلغ بالجنيه…') : tr('اكتب رسالتك…');
-  const back = () => (router.canGoBack() ? router.back() : router.replace(isShop ? '/account' : '/customer'));
+  const back = onClose ?? (() => (router.canGoBack() ? router.back() : router.replace(isShop ? '/account' : '/customer')));
   const main = step === 'confirm' || step === 'c_confirm';
 
   return (

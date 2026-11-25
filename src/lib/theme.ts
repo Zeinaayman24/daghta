@@ -1,65 +1,90 @@
 import { Platform } from 'react-native';
-// ضغطة (Daghta) design tokens.
-// Deep navy carries the brand and the text; sky blue is the call to action; lime marks a "tap" / success moment.
-// Taken from the brand mark (gear + pressing finger + speed lines).
+/**
+ * ضغطة (Daghta) design tokens: "workshop precision".
+ * Navy carries the brand (headers, hero bands); the working surfaces are light; sky is the one action colour;
+ * lime marks the "press" moment (selected, done, success). The same system the posts and the reel use.
+ * Every colour, type size, radius and motion value in the app comes from this file.
+ */
 export const brand = {
   navy: '#041D3F',
+  navy2: '#0B2D5C',
   sky: '#0AABFE',
+  skySoft: '#E6F6FF',
   lime: '#7CD035',
+  limeSoft: '#EAF7DF',
 };
 
 export const colors = {
-  ground: '#F6F7F9',     // app background: a quiet, neutral grey
-  surface: '#FFFFFF',    // cards, sheets, bars
+  ground: '#F3F6FA',     // the page
+  surface: '#FFFFFF',    // content, cards, sheets, bars
   card: '#FFFFFF',
-  soft: '#F2F4F7',       // tags, inner wells
-  ink: '#041D3F',        // the logo's navy: text, headings, strong surfaces
-  muted: '#5B6676',      // secondary text (passes AA on white)
-  faint: '#6B7484',      // hints and inactive icons (passes AA on white)
-  line: '#E6E9EE',       // hairlines and card borders
-  brand: '#041D3F',
+  soft: '#EEF2F7',       // tags, inner wells
+  ink: '#0F1B2D',        // body text
+  muted: '#4A5A70',      // secondary text (AA on white)
+  faint: '#6B7A90',      // hints and inactive icons (AA on white)
+  line: '#E3E8EF',       // dividers and hairlines
+  brand: '#041D3F',      // the navy: headers, hero bands, strong surfaces
   brandInk: '#FFFFFF',
-  primary: '#006BB3',    // the logo's sky, deepened so white text reads on it: the one action colour: main buttons, links, selection
-  primaryInk: '#FFFFFF',
-  primarySoft: '#EAF4FB',
-  accent: '#006BB3',     // kept for older screens: same as the action colour
-  sky: '#0AABFE',        // the logo's sky: small touches only (selected tab, new dot, progress), never text on white
+  navy2: '#0B2D5C',      // raised surfaces on navy
+  primary: '#0AABFE',    // the one action colour: main buttons (navy text on it), selection
+  primaryInk: '#041D3F',
+  primarySoft: '#E6F6FF',
+  primaryText: '#006BB3', // links and selected text on white (the sky is too light for text)
+  accent: '#006BB3',     // kept for older screens: link/selected text colour
+  sky: '#0AABFE',
   accentDeep: '#00588F',
   accentInk: '#FFFFFF',
-  accentSoft: '#EAF4FB',
-  lime: '#12805C',       // retired: older screens fall back to the "good" green
-  good: '#12805C',       // ready, done, guarantee
-  goodSoft: '#E7F5EF',
-  bad: '#C4321F',        // refuse, error, delete
-  badSoft: '#FBE9E7',
-  warn: '#8A4B00',       // preparing, waiting
-  warnSoft: '#FDF1E2',
+  accentSoft: '#E6F6FF',
+  lime: '#7CD035',       // the press moment: fills, dots, checks (never text on white)
+  limeInk: '#3E7A12',    // "done" text on white
+  good: '#3E7A12',       // ready, done, guarantee (text)
+  goodSoft: '#EAF7DF',
+  bad: '#E5484D',        // refuse, error, delete
+  badSoft: '#FDECEC',
+  warn: '#8A5A00',       // preparing, waiting
+  warnSoft: '#FFF3DC',
+  amber: '#F5A623',
   plate: '#7DB4EA',      // the light-blue band of an Egyptian private-car plate
   shadow: '#041D3F',
 };
 
-// Arabic text: Times New Roman where the device has it (Windows, Mac, iPhone), otherwise Noto Naskh Arabic,
-// the closest free match (Times New Roman itself can't be shipped inside the app, and Android doesn't have it).
-const naskh = { regular: 'NotoNaskhArabic_400Regular', medium: 'NotoNaskhArabic_500Medium', semibold: 'NotoNaskhArabic_600SemiBold', bold: 'NotoNaskhArabic_700Bold' };
-const stack = (f: string) => (Platform.OS === 'web' ? `"Times New Roman", ${f}, serif` : f);
+/**
+ * Type: Alexandria for display (titles, prices, big numbers), IBM Plex Sans Arabic for everything else.
+ * Both ship inside the app, so phones and the web look the same. Plex carries Arabic-Indic digits designed with its letters.
+ */
+const plex = { regular: 'IBMPlexSansArabic_400Regular', medium: 'IBMPlexSansArabic_500Medium', semibold: 'IBMPlexSansArabic_600SemiBold', bold: 'IBMPlexSansArabic_700Bold' };
+const alexandria = { bold: 'Alexandria_700Bold', black: 'Alexandria_800ExtraBold' };
+const stack = (f: string, fallback = 'sans-serif') => (Platform.OS === 'web' ? `${f}, "IBM Plex Sans Arabic", "Segoe UI", Roboto, ${fallback}` : f);
 export const fonts = {
-  regular: stack(naskh.regular),
-  medium: stack(naskh.medium),
-  semibold: stack(naskh.semibold),
-  bold: stack(naskh.bold),
-  display: stack(naskh.bold),
+  regular: stack(plex.regular),
+  medium: stack(plex.medium),
+  semibold: stack(plex.semibold),
+  bold: stack(plex.bold),
+  display: stack(alexandria.black, 'sans-serif'),
+  displayBold: stack(alexandria.bold, 'sans-serif'),
 };
-/** Times New Roman only has regular and bold, so the browser needs the weight too. */
-export const fontWeights = { regular: '400', medium: '500', semibold: '600', bold: '700', display: '700' } as const;
+export const fontWeights = { regular: '400', medium: '500', semibold: '600', bold: '700', display: '800', displayBold: '700' } as const;
 
-export const radius = { sm: 10, md: 14, lg: 16, xl: 20, pill: 999 };
+/** The type scale. Body is 16 (it was 13–14). */
+export const type = { xs: 12, sm: 14, md: 16, lg: 18, xl: 22, xxl: 28, display: 36, hero: 48 } as const;
+/** 4-pt spacing grid. */
+export const space = { 1: 4, 2: 8, 3: 12, 4: 16, 5: 24, 6: 32, 7: 48 } as const;
+export const gutter = { phone: 20, tablet: 32, desktop: 40 } as const;
 
-/** Soft lift for cards and floating bars. */
-/** Cards sit on a hairline border with only a whisper of shadow (flat, modern). */
+export const radius = { sm: 10, md: 14, lg: 16, xl: 20, sheet: 28, pill: 999 };
+
+/** Cards sit on a hairline border with no shadow (surface level 3). */
 export const lift = {
   borderWidth: 1, borderColor: colors.line,
 } as const;
-/** Floating things (tab bar, sheets, toasts) get a real shadow. */
+/** Floating things (sheets, toasts, the assistant bubble) get a real shadow. */
 export const liftStrong = {
-  shadowColor: colors.shadow, shadowOpacity: 0.12, shadowRadius: 22, shadowOffset: { width: 0, height: 8 }, elevation: 8,
+  shadowColor: colors.shadow, shadowOpacity: 0.16, shadowRadius: 24, shadowOffset: { width: 0, height: 10 }, elevation: 8,
 } as const;
+/** The hover/selected lift of a card on desktop. */
+export const liftHover = {
+  shadowColor: colors.shadow, shadowOpacity: 0.1, shadowRadius: 18, shadowOffset: { width: 0, height: 8 }, elevation: 4,
+} as const;
+
+/** Breakpoints: the tab bar below 900, the rail above. */
+export const bp = { tablet: 600, desktop: 900 } as const;

@@ -7,7 +7,7 @@ import { Btn, Chips, ErrorText, Field, Icon, IconButton, Labeled, Loading, Muted
 import { partIsSided } from '@/lib/assistant';
 import { isElectrified, matches } from '@/lib/catalogue';
 import { useAuth } from '@/lib/auth';
-import { SIDES, WANTED, ar, friendlyError, newId, reqNo, type Car } from '@/lib/data';
+import { SIDES, WANTED, ar, friendlyError, newId, reqNo, type Car, carYear } from '@/lib/data';
 import { must, useLive } from '@/lib/live';
 import { pickPhoto, uploadPhoto } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
@@ -284,7 +284,7 @@ export default function NewRequest() {
                   return (
                     <Press key={c.key} onPress={() => setCarKey(c.key)} selected={on}
                       style={[lift, { flexDirection: 'row', alignItems: 'center', gap: 14, backgroundColor: colors.surface, borderRadius: 20, padding: 14, borderWidth: 2, borderColor: on ? colors.ink : colors.line }]}>
-                      <Plate top={c.model || '—'} bottom={ar(c.year)} />
+                      <Plate top={c.model || '—'} bottom={carYear(c.year)} />
                       <View style={{ flex: 1 }}><T w="semibold" size={15}>{c.make} {c.model}</T>{c.vin ? <Muted size={12}>{t('شاسيه')}{' '}{c.vin}</Muted> : null}</View>
                       <Icon name={on ? 'radio-button-on' : 'radio-button-off'} size={22} color={on ? colors.ink : colors.faint} />
                     </Press>
@@ -298,7 +298,7 @@ export default function NewRequest() {
               <T w="bold" size={28} style={{ lineHeight: 38, letterSpacing: -0.4 }}>{t('مراجعة الطلب')}</T>
               <View style={[{ backgroundColor: colors.surface, borderRadius: 18, overflow: 'hidden' }, lift]}>
                 <View style={{ backgroundColor: colors.ink, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
-                  <Plate top={car.model || '—'} bottom={ar(car.year)} size="sm" />
+                  <Plate top={car.model || '—'} bottom={carYear(car.year)} size="sm" />
                   <View style={{ flex: 1 }}>
                     <T w="semibold" color="#fff">{car.make} {car.model}</T>
                     <T size={12.5} color="rgba(255,255,255,.7)">{profile.area}</T>

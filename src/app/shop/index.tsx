@@ -1,5 +1,5 @@
 import { PushPrompt } from '@/components/PushPrompt';
-import { Redirect, router } from 'expo-router';
+import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useState } from 'react';
 import { View } from 'react-native';
 import { BottomNav, rememberRole } from '@/components/AppHeader';
@@ -26,7 +26,12 @@ const SLOW_MIN = 15; // after this, an unanswered request turns red
 export default function ShopInbox() {
   const { ready, session, profile, shop, shopPrivate, refresh } = useAuth();
   const [switching, setSwitching] = useState(false);
-  const [tab, setTab] = useState<Tab>('open');
+  // the Work tab in the navigation opens this same screen on the orders side (?tab=preparing)
+  const params = useLocalSearchParams<{ tab?: string }>();
+  const TABS: Tab[] = ['open', 'quoted', 'preparing', 'ready', 'done', 'install'];
+  const fromParam = typeof params.tab === 'string' && TABS.includes(params.tab as Tab) ? (params.tab as Tab) : null;
+  const [tab, setTab] = useState<Tab>(fromParam ?? 'open');
+  useEffect(() => { if (fromParam) setTab(fromParam); }, [fromParam]);
   const [q, setQ] = useState('');
   const [cond, setCond] = useState<'all' | 'used' | 'new'>('all');
   const [area, setArea] = useState('الكل');

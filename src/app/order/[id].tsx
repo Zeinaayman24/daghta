@@ -139,7 +139,7 @@ export default function OrderPage() {
       {data!.code && !unpaid && o.status !== 'received' && o.status !== 'cancelled' ? (
         <View style={{ backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: 20, gap: 8, alignItems: 'center' }}>
           <Muted size={14}>{t('كود الاستلام')}</Muted>
-          <T w="bold" size={44} style={{ letterSpacing: 10, lineHeight: 56, writingDirection: 'ltr' }} selectable>{ar(data!.code)}</T>
+          <T w="display" size={44} style={{ letterSpacing: 10, lineHeight: 56, writingDirection: 'ltr' }} selectable>{String(data!.code)}</T>
           <Muted size={13.5} center>{t('افحص القطعة الأول: الموديل، الجهة، الحالة، وإنها زي صورة العرض. لو زي العرض، ادّي الكود للمحل أو المندوب. بعد الكود، الاسترجاع بيكون مع المحل حسب القانون.')}</Muted>
         </View>
       ) : null}

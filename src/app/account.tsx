@@ -7,7 +7,7 @@ import { Icon, Loading, Muted, Pill, Row, Screen, T, toast, Toggle } from '@/com
 import { InstallCard } from '@/components/InstallCard';
 import { greetOn, greetParts, setGreetOn, speakGreeting } from '@/lib/greet';
 import { useAuth } from '@/lib/auth';
-import { SHOP_TYPES, addressLine, ar, friendlyError } from '@/lib/data';
+import { SHOP_TYPES, addressLine, ar, friendlyError, carYear } from '@/lib/data';
 import { photoUrl, supabase } from '@/lib/supabase';
 import { colors } from '@/lib/theme';
 import { t, dir, isEn, setLang, startAlign } from '@/lib/i18n';
@@ -61,7 +61,7 @@ export default function Account() {
   if (isShop) return <ShopAccount />;
 
   const first = (profile.full_name || '').trim();
-  const car = [profile.car_make, profile.car_model, profile.car_year ? ar(profile.car_year) : ''].filter(Boolean).join(' ');
+  const car = [profile.car_make, profile.car_model, carYear(profile.car_year)].filter(Boolean).join(' ');
   return (
     <Screen nav={<BottomNav role="customer" />}>
       <Row gap={14} style={{ alignItems: 'center' }}>

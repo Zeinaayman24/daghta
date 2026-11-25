@@ -1,4 +1,5 @@
 import { isEn, t } from '@/lib/i18n';
+import * as fmt from '@/lib/fmt';
 export const MAKES = ['هيونداي', 'كيا', 'نيسان', 'تويوتا', 'ميتسوبيشي', 'شيفروليه', 'دايو', 'شيري', 'بي واي دي', 'إم جي', 'فيات', 'بيجو', 'رينو', 'سكودا', 'أوبل', 'سوزوكي', 'جيلي', 'أخرى'];
 
 export const AREAS = ['مدينة نصر', 'مصر الجديدة', 'التجمع الخامس', 'المعادي', 'حلوان', 'شبرا', 'شبرا الخيمة', 'وسط البلد', 'حدائق القبة', 'عين شمس', 'المطرية', 'الدقي', 'المهندسين', 'فيصل', 'الهرم', '٦ أكتوبر', 'الشيخ زايد', 'السبتية', 'التوفيقية', 'أخرى'];
@@ -35,11 +36,14 @@ export const warrantyLabel = (d: number) => (d > 0 ? t('ضمان {0} يوم', ar
 export const MATCH_HOURS = 48;
 export const DELIVERY_FEE = 60;
 
-const AD = '٠١٢٣٤٥٦٧٨٩';
-/** Digits as the reader expects them: Arabic-Indic in Arabic, 0-9 in English. */
-export const ar = (v: string | number) => (isEn() ? String(v) : String(v).replace(/\d/g, (d) => AD[Number(d)]));
-export const money = (n: number) => (isEn() ? Math.round(n || 0).toLocaleString('en-US') : ar(Math.round(n || 0).toLocaleString('en-US')).replace(/,/g, '٬'));
-export const reqNo = (n: number) => '#' + ar(n);
+/** Digits as the reader expects them: Arabic-Indic in Arabic, 0-9 in English (see fmt.ts for the full rules). */
+export const ar = (v: string | number) => fmt.digits(v);
+/** An amount without its currency (screens add «ج.م» themselves). */
+export const money = (n: number) => fmt.amount(n);
+/** Request and order numbers are Latin in both languages: people read them out to couriers. */
+export const reqNo = (n: number) => fmt.id(n);
+/** A model year is part of the model name: Latin in both languages. */
+export const carYear = (y: number | string | null | undefined) => fmt.year(y);
 
 /** "٣ يوم" / "3 days": how long since `iso`, without the "since" word. */
 export const sinceShort = (iso: string) => {
@@ -84,7 +88,7 @@ export const SHOP_COLS = 'id, area, brands, status, created_at, governorate, sho
 export const validPhone = (p: string) => /^01\d{9}$/.test(p.replace(/\s/g, ''));
 export const validPostal = (p: string) => p.trim() === '' || /^\d{5}$/.test(toLatin(p.trim()));
 /** Converts Arabic-Indic digits typed on Arabic keyboards to 0-9. */
-export const toLatin = (s: string) => s.replace(/[٠-٩]/g, (d) => String('٠١٢٣٤٥٦٧٨٩'.indexOf(d)));
+export const toLatin = (s: string) => fmt.toLatin(s);
 
 export type Profile = {
   id: string; full_name: string; phone: string; area: string;
@@ -242,7 +246,8 @@ export type DeliveryAddress = { governorate: string; area: string; street: strin
 export type SavedAddress = DeliveryAddress & { id: string; label: string; used_at: string };
 export type PayMethod = 'cash' | 'shop' | 'instapay' | 'card';
 export type PayStatus = 'unpaid' | 'awaiting' | 'review' | 'paid' | 'failed' | 'refund_due' | 'refunded';
-export const orderNo = (n: number) => '#' + ar(n);
+/** Order numbers are Latin in both languages: people read them out to couriers. */
+export const orderNo = (n: number) => fmt.id(n);
 /** What the customer reads for each order status. */
 export const ORDER_LABEL: Record<Order['status'], { title: string; short: string; icon: string }> = {
   preparing: { title: t('المحل بيجهّز أوردرك'), short: t('بيتجهّز'), icon: 'construct' },

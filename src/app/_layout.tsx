@@ -1,7 +1,9 @@
-import { NotoNaskhArabic_400Regular } from '@expo-google-fonts/noto-naskh-arabic/400Regular';
-import { NotoNaskhArabic_500Medium } from '@expo-google-fonts/noto-naskh-arabic/500Medium';
-import { NotoNaskhArabic_600SemiBold } from '@expo-google-fonts/noto-naskh-arabic/600SemiBold';
-import { NotoNaskhArabic_700Bold } from '@expo-google-fonts/noto-naskh-arabic/700Bold';
+import { IBMPlexSansArabic_400Regular } from '@expo-google-fonts/ibm-plex-sans-arabic/400Regular';
+import { IBMPlexSansArabic_500Medium } from '@expo-google-fonts/ibm-plex-sans-arabic/500Medium';
+import { IBMPlexSansArabic_600SemiBold } from '@expo-google-fonts/ibm-plex-sans-arabic/600SemiBold';
+import { IBMPlexSansArabic_700Bold } from '@expo-google-fonts/ibm-plex-sans-arabic/700Bold';
+import { Alexandria_700Bold } from '@expo-google-fonts/alexandria/700Bold';
+import { Alexandria_800ExtraBold } from '@expo-google-fonts/alexandria/800ExtraBold';
 import { Alexandria_900Black } from '@expo-google-fonts/alexandria/900Black';
 import { useFonts } from 'expo-font';
 import { Slot } from 'expo-router';
@@ -14,6 +16,8 @@ import { LockGate } from '@/components/LockGate';
 import { Intro } from '@/components/Intro';
 import { RotateNotice } from '@/components/RotateNotice';
 import { Greeter } from '@/components/Greeter';
+import { FloatingAssistant } from '@/components/FloatingAssistant';
+import { DemoRibbon } from '@/components/DemoRibbon';
 import { introWanted, setIntroRunning } from '@/lib/intro';
 import { brand, colors } from '@/lib/theme';
 import { dir, lang, loadLang } from '@/lib/i18n';
@@ -26,7 +30,8 @@ if (Platform.OS !== 'web' && I18nManager.isRTL !== (dir() === 'rtl')) {
 
 export default function RootLayout() {
   const [loaded] = useFonts({
-    NotoNaskhArabic_400Regular, NotoNaskhArabic_500Medium, NotoNaskhArabic_600SemiBold, NotoNaskhArabic_700Bold, Alexandria_900Black,
+    IBMPlexSansArabic_400Regular, IBMPlexSansArabic_500Medium, IBMPlexSansArabic_600SemiBold, IBMPlexSansArabic_700Bold,
+    Alexandria_700Bold, Alexandria_800ExtraBold, Alexandria_900Black,
   });
 
   // the opening animation plays over the app while it loads underneath
@@ -68,6 +73,8 @@ export default function RootLayout() {
               <Greeter />
               <View style={{ flex: 1, direction: dir(), backgroundColor: colors.ground }}>
                 <LockGate><Slot /></LockGate>
+                <FloatingAssistant />
+                <DemoRibbon />
               </View>
             </AuthProvider>
           </InsetsFix>

@@ -3,7 +3,7 @@ import { useEffect, useState } from 'react';
 import { ActivityIndicator, Image, ScrollView, TextInput, View } from 'react-native';
 import { BackBar, Empty, Icon, Loading, Muted, Photo, Pill, Press, Row, Screen, T, toast } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
-import { ago, ar, friendlyError, money, type Message, type Request, type Shop, SHOP_COLS } from '@/lib/data';
+import { ago, ar, friendlyError, money, type Message, type Request, type Shop, SHOP_COLS, carYear } from '@/lib/data';
 import { must, useLive } from '@/lib/live';
 import { pickPhoto, uploadPhoto } from '@/lib/photos';
 import { photoUrl, supabase } from '@/lib/supabase';
@@ -92,7 +92,7 @@ export default function Chat() {
           <Photo uri={photoUrl(r.photo_path)} size={44} />
           <View style={{ flex: 1 }}>
             <T w="semibold" size={14}>{t(r.part)}</T>
-            <Muted size={12}>{r.car_make} {r.car_model} {ar(r.car_year)}{data?.quote ? (data.offers > 1 && !data.deal ? t('، {0} عروض من {1} ج.م', ar(data.offers), money(data.quote.price)) : t('، عرض المحل {0} ج.م', money(data.quote.price))) : ''}</Muted>
+            <Muted size={12}>{r.car_make} {r.car_model} {carYear(r.car_year)}{data?.quote ? (data.offers > 1 && !data.deal ? t('، {0} عروض من {1} ج.م', ar(data.offers), money(data.quote.price)) : t('، عرض المحل {0} ج.م', money(data.quote.price))) : ''}</Muted>
           </View>
           <Icon name="chevron-back" size={16} color={colors.faint} />
         </Press>
