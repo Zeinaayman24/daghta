@@ -1,0 +1,606 @@
+{
+ "ar/home": [
+  "GET table:ads [limit order] body=",
+  "GET table:car_makes [active=eq order] body=",
+  "GET table:orders [customer_id=eq limit order status=in] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [request_id=in] body=",
+  "GET table:requests [customer_id=eq limit order status=in] body=",
+  "GET table:shop_private [id=eq] body=",
+  "HEAD table:notifications [link=not read_at=is user_id=eq] body=",
+  "POST rpc:ad_event [] body=p_ad,p_click",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/new": [
+  "GET table:cars [order owner_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/requests": [
+  "GET table:bookings [customer_id=eq limit order] body=",
+  "GET table:install_quotes [request_id=in] body=",
+  "GET table:install_requests [customer_id=eq limit order] body=",
+  "GET table:install_services [order] body=",
+  "GET table:orders [customer_id=eq limit order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [request_id=in] body=",
+  "GET table:requests [customer_id=eq limit order] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/request": [
+  "GET table:app_settings [or=(key] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [order request_id=in] body=",
+  "GET table:requests [batch_id=eq order] body=",
+  "GET table:requests [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "GET table:shops [] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:decline_counts [] body=p_requests",
+  "POST rpc:delivery_options [] body=p_quotes",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_cards [] body=p_shops",
+  "POST rpc:shop_pay_options [] body=p_shops"
+ ],
+ "ar/order": [
+  "GET table:order_codes [order_id=eq] body=",
+  "GET table:orders [id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [id=in] body=",
+  "GET table:requests [order order_id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "GET table:shops [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_cards [] body=p_shops"
+ ],
+ "ar/chat": [
+  "GET table:messages [order request_id=eq shop_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [order request_id=eq shop_id=eq] body=",
+  "GET table:requests [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "GET table:shops [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:mark_chat_read [] body=p_request,p_shop",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_cards [] body=p_shops"
+ ],
+ "ar/shops": [
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shops_near [] body=p_lat,p_lng"
+ ],
+ "ar/shopprofile": [
+  "GET table:favorites [customer_id=eq shop_id=eq] body=",
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_install_services [shop_id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_profile [] body=p_shop",
+  "POST rpc:shop_reviews [] body=p_shop",
+  "POST rpc:shops_near [] body=p_lat,p_lng,p_shop"
+ ],
+ "ar/install_new": [
+  "GET table:cars [order owner_id=eq] body=",
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/install": [
+  "GET table:install_quotes [order request_id=eq] body=",
+  "GET table:install_requests [id=eq] body=",
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shops_near [] body=p_lat,p_lng"
+ ],
+ "ar/booking": [
+  "GET table:bookings [id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:booking_people [] body=p_booking",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/messages": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/notifications": [
+  "GET table:notifications [limit link=not order user_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "PATCH table:notifications [read_at=is user_id=eq] body=read_at",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/account": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/profile": [
+  "GET table:car_makes [active=eq order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/cars": [
+  "GET table:car_makes [active=eq order] body=",
+  "GET table:cars [order owner_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/favorites": [
+  "GET table:favorites [customer_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "GET table:shops [id=in] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_cards [] body=p_shops"
+ ],
+ "ar/assistant": [
+  "GET table:cars [order owner_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:reports [limit order reporter_id=eq status=in] body=",
+  "GET table:requests [customer_id=eq limit order] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST function:assistant [] body=ping",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/support": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:reports [order reporter_id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/privacy": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/legal": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/s_home": [
+  "GET table:bookings [limit order shop_id=eq] body=",
+  "GET table:declines [shop_id=eq] body=",
+  "GET table:install_quotes [shop_id=eq] body=",
+  "GET table:install_requests [limit order] body=",
+  "GET table:orders [limit order shop_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [shop_id=eq] body=",
+  "GET table:requests [limit order] body=",
+  "GET table:shop_private [id=eq] body=",
+  "HEAD table:notifications [link=not read_at=is user_id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/s_request": [
+  "GET table:declines [request_id=eq shop_id=eq] body=",
+  "GET table:declines [request_id=in shop_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [order request_id=eq shop_id=eq] body=",
+  "GET table:quotes [request_id=in shop_id=eq] body=",
+  "GET table:requests [batch_id=eq order] body=",
+  "GET table:requests [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/s_order": [
+  "GET table:orders [id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [id=in] body=",
+  "GET table:requests [order order_id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/s_install": [
+  "GET table:bookings [limit order request_id=eq shop_id=eq] body=",
+  "GET table:install_quotes [request_id=eq shop_id=eq] body=",
+  "GET table:install_requests [id=eq] body=",
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/s_booking": [
+  "GET table:bookings [id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:booking_people [] body=p_booking",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/s_balance": [
+  "GET table:app_settings [key=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_balance [] body=",
+  "POST rpc:my_deposit_share [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/s_perf": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_complaints [] body=",
+  "POST rpc:shop_performance [] body="
+ ],
+ "ar/s_services": [
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_install_services [shop_id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/s_setup": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/s_messages": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/s_account": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "ar/welcome": [
+  "POST rpc:app_locked [] body="
+ ],
+ "ar/login": [
+  "POST rpc:app_locked [] body="
+ ],
+ "en/home": [
+  "GET table:ads [limit order] body=",
+  "GET table:car_makes [active=eq order] body=",
+  "GET table:car_models [active=eq make_id=eq order] body=",
+  "GET table:orders [customer_id=eq limit order status=in] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [request_id=in] body=",
+  "GET table:requests [customer_id=eq limit order status=in] body=",
+  "GET table:shop_private [id=eq] body=",
+  "HEAD table:notifications [link=not read_at=is user_id=eq] body=",
+  "POST rpc:ad_event [] body=p_ad,p_click",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/new": [
+  "GET table:cars [order owner_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/requests": [
+  "GET table:bookings [customer_id=eq limit order] body=",
+  "GET table:install_quotes [request_id=in] body=",
+  "GET table:install_requests [customer_id=eq limit order] body=",
+  "GET table:install_services [order] body=",
+  "GET table:orders [customer_id=eq limit order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [request_id=in] body=",
+  "GET table:requests [customer_id=eq limit order] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/request": [
+  "GET table:app_settings [or=(key] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [order request_id=in] body=",
+  "GET table:requests [batch_id=eq order] body=",
+  "GET table:requests [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "GET table:shops [] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:decline_counts [] body=p_requests",
+  "POST rpc:delivery_options [] body=p_quotes",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_cards [] body=p_shops",
+  "POST rpc:shop_pay_options [] body=p_shops"
+ ],
+ "en/order": [
+  "GET table:order_codes [order_id=eq] body=",
+  "GET table:orders [id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [id=in] body=",
+  "GET table:requests [order order_id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "GET table:shops [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_cards [] body=p_shops"
+ ],
+ "en/chat": [
+  "GET table:messages [order request_id=eq shop_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [order request_id=eq shop_id=eq] body=",
+  "GET table:requests [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "GET table:shops [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:mark_chat_read [] body=p_request,p_shop",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_cards [] body=p_shops"
+ ],
+ "en/shops": [
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shops_near [] body=p_lat,p_lng"
+ ],
+ "en/shopprofile": [
+  "GET table:favorites [customer_id=eq shop_id=eq] body=",
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_install_services [shop_id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_profile [] body=p_shop",
+  "POST rpc:shop_reviews [] body=p_shop",
+  "POST rpc:shops_near [] body=p_lat,p_lng,p_shop"
+ ],
+ "en/install_new": [
+  "GET table:cars [order owner_id=eq] body=",
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/install": [
+  "GET table:install_quotes [order request_id=eq] body=",
+  "GET table:install_requests [id=eq] body=",
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shops_near [] body=p_lat,p_lng"
+ ],
+ "en/booking": [
+  "GET table:bookings [id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:booking_people [] body=p_booking",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/messages": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/notifications": [
+  "GET table:notifications [limit link=not order user_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "PATCH table:notifications [read_at=is user_id=eq] body=read_at",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/account": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/profile": [
+  "GET table:car_makes [active=eq order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/cars": [
+  "GET table:car_makes [active=eq order] body=",
+  "GET table:car_models [active=eq make_id=eq order] body=",
+  "GET table:cars [order owner_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/favorites": [
+  "GET table:favorites [customer_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "GET table:shops [id=in] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_cards [] body=p_shops"
+ ],
+ "en/assistant": [
+  "GET table:cars [order owner_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:reports [limit order reporter_id=eq status=in] body=",
+  "GET table:requests [customer_id=eq limit order] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST function:assistant [] body=ping",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/support": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:reports [order reporter_id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/privacy": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/legal": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/s_home": [
+  "GET table:bookings [limit order shop_id=eq] body=",
+  "GET table:declines [shop_id=eq] body=",
+  "GET table:install_quotes [shop_id=eq] body=",
+  "GET table:install_requests [limit order] body=",
+  "GET table:orders [limit order shop_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [shop_id=eq] body=",
+  "GET table:requests [limit order] body=",
+  "GET table:shop_private [id=eq] body=",
+  "HEAD table:notifications [link=not read_at=is user_id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/s_request": [
+  "GET table:declines [request_id=eq shop_id=eq] body=",
+  "GET table:declines [request_id=in shop_id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [order request_id=eq shop_id=eq] body=",
+  "GET table:quotes [request_id=in shop_id=eq] body=",
+  "GET table:requests [batch_id=eq order] body=",
+  "GET table:requests [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/s_order": [
+  "GET table:orders [id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:quotes [id=in] body=",
+  "GET table:requests [order order_id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/s_install": [
+  "GET table:bookings [limit order request_id=eq shop_id=eq] body=",
+  "GET table:install_quotes [request_id=eq shop_id=eq] body=",
+  "GET table:install_requests [id=eq] body=",
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/s_booking": [
+  "GET table:bookings [id=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:booking_people [] body=p_booking",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/s_balance": [
+  "GET table:app_settings [key=eq] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_balance [] body=",
+  "POST rpc:my_deposit_share [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/s_perf": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body=",
+  "POST rpc:shop_complaints [] body=",
+  "POST rpc:shop_performance [] body="
+ ],
+ "en/s_services": [
+  "GET table:install_services [order] body=",
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_install_services [shop_id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/s_setup": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/s_messages": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/s_account": [
+  "GET table:profiles [id=eq] body=",
+  "GET table:shop_private [id=eq] body=",
+  "POST rpc:app_locked [] body=",
+  "POST rpc:my_inbox [] body=",
+  "POST rpc:my_shop [] body="
+ ],
+ "en/welcome": [
+  "POST rpc:app_locked [] body="
+ ],
+ "en/login": [
+  "POST rpc:app_locked [] body="
+ ]
+}
