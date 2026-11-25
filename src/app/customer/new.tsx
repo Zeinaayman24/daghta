@@ -1,7 +1,7 @@
 import AsyncStorage from '@react-native-async-storage/async-storage';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
 import { useEffect, useRef, useState } from 'react';
-import { Animated, Easing, Image, Platform, ScrollView, TextInput, View } from 'react-native';
+import { Animated, Image, PanResponder, Platform, ScrollView, TextInput, View, useWindowDimensions } from 'react-native';
 import { useSafeAreaInsets } from 'react-native-safe-area-context';
 import { Btn, Chips, ErrorText, Field, Icon, IconButton, Labeled, Loading, Muted, Plate, Press, Row, Seg, T, ToastHost, toast } from '@/components/ui';
 import { partIsSided } from '@/lib/assistant';
@@ -11,7 +11,9 @@ import { SIDES, WANTED, ar, friendlyError, newId, reqNo, type Car, carYear } fro
 import { must, useLive } from '@/lib/live';
 import { pickPhoto, uploadPhoto } from '@/lib/photos';
 import { supabase } from '@/lib/supabase';
-import { colors, fonts, lift } from '@/lib/theme';
+import { colors, fonts, lift, liftStrong } from '@/lib/theme';
+import { springTo, reducedMotion } from '@/lib/motion';
+import { Moment } from '@/components/Moment';
 import { t, dir, startAlign } from '@/lib/i18n';
 
 type Cond = 'used' | 'new' | 'any';
@@ -78,7 +80,10 @@ export default function NewRequest() {
   const [busy, setBusy] = useState(false);
   const [err, setErr] = useState<string | null>(null);
   const [draft, setDraft] = useState<{ items: Item[]; carKey: string } | null>(null);
-  const slide = useRef(new Animated.Value(0)).current;
+  const slide = useRef(new Animated.Value(0)).current; // the step track: new step springs in from the reading end
+  const prevStep = useRef(0);
+  const { width: winW } = useWindowDimensions();
+  const [sent, setSent] = useState<{ id: string; num: number } | null>(null);
   const uid = session?.user.id;
   const { data: extra } = useLive(async () => (uid ? (must(await supabase.from('cars').select('*').eq('owner_id', uid).order('created_at')) as Car[]) : []), ['cars'], [uid]);
 
@@ -98,9 +103,25 @@ export default function NewRequest() {
   }, [items, carKey, uid, draft]);
 
   useEffect(() => {
-    slide.setValue(1);
-    Animated.timing(slide, { toValue: 0, duration: 260, easing: Easing.out(Easing.cubic), useNativeDriver: Platform.OS !== 'web' }).start();
-  }, [step, slide]);
+    const forward = step >= prevStep.current; prevStep.current = step;
+    const W = Math.min(winW, 560);
+    if (reducedMotion()) { slide.setValue(0); return; }
+    slide.setValue((forward ? 1 : -1) * (dir() === 'rtl' ? -W : W));
+    springTo(slide, 0, 'soft').start();
+  }, [step, slide, winW]);
+  // swipe between steps: release past 30% of the width commits, less springs back
+  const stepRef = useRef({ step: 0, last: 0, canNext: true }); 
+  const pan = useRef(PanResponder.create({
+    onMoveShouldSetPanResponder: (_, g) => Math.abs(g.dx) > 10 && Math.abs(g.dx) > Math.abs(g.dy) * 1.5,
+    onPanResponderMove: (_, g) => slide.setValue(g.dx * 0.6),
+    onPanResponderRelease: (_, g) => {
+      const { step: st, last: ls, canNext: ok } = stepRef.current;
+      const forward = (dir() === 'rtl' ? g.dx : -g.dx) > 0;
+      const W = Math.min(winW, 560);
+      if (Math.abs(g.dx) > W * 0.3 && ((forward && st < ls && ok) || (!forward && st > 0))) setStep(st + (forward ? 1 : -1));
+      else springTo(slide, 0, 'soft').start();
+    },
+  })).current;
 
   if (ready && !session) return <Redirect href="/login" />;
   if (!profile) return <View style={{ flex: 1, backgroundColor: colors.ground, padding: 20 }}><Loading /></View>;
@@ -151,8 +172,7 @@ export default function NewRequest() {
       if (error) throw error;
       const first = [...(data ?? [])].sort((a, b) => a.num - b.num)[0];
       AsyncStorage.removeItem(DRAFT).catch(() => {});
-      toast(t('طلب {0} اتبعت للمحلات', reqNo(first.num)));
-      router.replace(`/customer/${first.id}`);
+      setSent({ id: first.id, num: first.num });
     } catch (x) {
       const m = friendlyError(x);
       setErr(m === t('حصلت مشكلة. جرّب تاني.') ? t('الطلب مااتبعتش. اتأكد من النت وجرّب تاني.') : m);
@@ -161,6 +181,7 @@ export default function NewRequest() {
   }
 
   const canNext = step === 0 ? items.length > 0 : true;
+  stepRef.current = { step, last, canNext };
   const next = () => (step < last ? setStep(step + 1) : send());
   const electric = isElectrified(car.powertrain);
   const all = [...(electric ? EV_PARTS : []), ...CATALOG, ...Object.values(CATEGORY_PARTS).flatMap((c) => c.parts.map((part) => ({ part, icon: c.icon })))]
@@ -189,33 +210,26 @@ export default function NewRequest() {
       {/* top: close, progress, step title */}
       <View style={{ paddingTop: insets.top + 8, backgroundColor: colors.ground }}>
         <View style={{ width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 18, gap: 14 }}>
-          <Row style={{ justifyContent: 'space-between' }}>
+          <Row gap={12}>
             <IconButton name={step ? 'chevron-forward' : 'close'} label={step ? t('رجوع') : t('اقفل')} onPress={() => (step ? setStep(step - 1) : leave())} />
-            <T w="semibold" size={14} color={colors.muted}>{t('خطوة')}{' '}{ar(step + 1)} {t('من')}{' '}{ar(STEPS.length)}</T>
-            <Press onPress={() => router.push({ pathname: '/assistant', params: { mode: 'request' } })} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
-              <Icon name="sparkles" size={15} color={colors.accentDeep} /><T size={13} w="medium" color={colors.accentDeep}>{t('بالمساعد')}</T>
-            </Press>
+            <View style={{ flex: 1 }}>
+              <T w="display" size={20} numberOfLines={1}>{kind === 'parts' ? t('ناقصك إيه؟') : kind === 'details' ? t('تفاصيل القطع') : kind === 'car' ? t('لأنهي عربية؟') : t('راجع وابعت')}</T>
+              <Muted size={12.5}>{car.make ? `${car.make} ${car.model} ${carYear(car.year)}` : t('من غير عربية')}</Muted>
+            </View>
+            <T w="semibold" size={12.5} color={colors.muted}>{ar(step + 1)} / {ar(STEPS.length)}</T>
           </Row>
           <Row gap={6}>
-            {STEPS.map((sname, i) => (
-              <View key={sname} style={{ flex: 1, gap: 6 }}>
-                <View style={{ height: 5, borderRadius: 3, backgroundColor: i <= step ? colors.accent : colors.line }} />
-                <T size={11.5} w={i === step ? 'semibold' : 'regular'} color={i <= step ? colors.ink : colors.faint}>{sname}</T>
-              </View>
-            ))}
+            {STEPS.map((sname, i) => <ProgressSeg key={sname} on={i <= step} />)}
           </Row>
         </View>
       </View>
 
-      <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false}>
-        <Animated.View style={{ width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 18, paddingTop: 22, paddingBottom: 40, gap: 18,
-          opacity: slide.interpolate({ inputRange: [0, 1], outputRange: [1, 0] }), transform: [{ translateX: slide.interpolate({ inputRange: [0, 1], outputRange: [0, -40] }) }] }}>
+      <ScrollView style={{ flex: 1 }} keyboardShouldPersistTaps="handled" showsVerticalScrollIndicator={false} {...pan.panHandlers}>
+        <Animated.View style={{ width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 20, paddingTop: 18, paddingBottom: 40, gap: 18, transform: [{ translateX: slide }] }}>
           {kind === 'parts' ? (
             <>
-              <T w="bold" size={28} style={{ lineHeight: 38, letterSpacing: -0.4 }}>{t('ناقصك إيه؟')}</T>
-              <Muted size={14} style={{ marginTop: -10 }}>{t('ممكن تضيف أكتر من قطعة في نفس الطلب، وكل محل بيبعت عرض على اللي عنده.')}</Muted>
-              <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.surface, borderRadius: 18, paddingStart: 16, paddingEnd: 6, height: 58 }, lift]}>
-                <Icon name="search" size={20} color={colors.faint} />
+              <View style={[{ flexDirection: 'row', alignItems: 'center', gap: 10, backgroundColor: colors.surface, borderRadius: 18, paddingStart: 16, paddingEnd: 6, height: 60, borderWidth: 2, borderColor: colors.primary }, liftStrong]}>
+                <Icon name="search" size={22} color={colors.brand} stroke={2.2} />
                 <TextInput value={q} onChangeText={setQ} placeholder={t('اسم القطعة')} placeholderTextColor={colors.faint} onSubmitEditing={() => add(q)} returnKeyType="done"
                   style={[{ flex: 1, fontFamily: fonts.medium, fontSize: 16, color: colors.ink, textAlign: startAlign() }, { outlineStyle: 'none' } as any]} />
                 {q.trim().length > 1 ? <Btn kind="small" title={t('ضيف')} icon="add" onPress={() => add(q)} style={{ alignSelf: 'center' }} /> : null}
@@ -223,33 +237,37 @@ export default function NewRequest() {
               {items.length ? (
                 <View style={{ gap: 8 }}>
                   {items.map((it) => (
-                    <View key={it.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.ink, borderRadius: 18, padding: 12 }}>
-                      <View style={{ width: 42, height: 42, borderRadius: 12, backgroundColor: 'rgba(255,255,255,.1)', alignItems: 'center', justifyContent: 'center' }}>
-                        <Icon set="mci" name={iconOf(it.part)} size={22} color={colors.accent} />
-                      </View>
+                    <View key={it.key} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, backgroundColor: colors.brand, borderRadius: 18, padding: 10, paddingStart: 12 }}>
+                      <View style={{ width: 20, height: 20, borderRadius: 10, backgroundColor: colors.lime, alignItems: 'center', justifyContent: 'center' }}><Icon name="checkmark" size={12} color={colors.brand} stroke={3} /></View>
                       <T w="semibold" size={15} color="#fff" style={{ flex: 1 }}>{t(it.part)}</T>
+                      {/* the photo lives with the part, on the same step: it is what helps a shop price it right */}
+                      <Press onPress={async () => { try { const uri = await pickPhoto(); if (uri) upd(it.key, { photo: uri }); } catch { toast(t('الصورة دي مش مدعومة. اختار صورة JPG أو PNG.')); } }} label={it.photo ? t('غيّر الصورة') : t('صوّر القطعة')}
+                        style={{ flexDirection: 'row', alignItems: 'center', gap: 6, height: 38, paddingHorizontal: 10, borderRadius: 12, backgroundColor: it.photo ? colors.lime : 'rgba(255,255,255,.12)' }}>
+                        {it.photo ? <Image source={{ uri: it.photo }} style={{ width: 26, height: 26, borderRadius: 7 }} /> : <Icon name="camera" size={18} color="#fff" />}
+                        <T size={12.5} w="semibold" color={it.photo ? colors.brand : '#fff'}>{it.photo ? t('صورة ✓') : t('صوّرها')}</T>
+                      </Press>
                       <Press onPress={() => setItems((xs) => xs.filter((x) => x.key !== it.key))} label={t('شيل القطعة')} hitSlop={8}><Icon name="close-circle" size={22} color="rgba(255,255,255,.6)" /></Press>
                     </View>
                   ))}
                 </View>
               ) : null}
-              <T w="semibold" size={14} color={colors.muted}>{q.trim() ? t('اقتراحات') : cat ? t('قطع {0}', t(cat)) : t('الأكتر طلباً')}</T>
-              <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 10 }}>
-                {suggestions.map((c) => (
+              <T w="semibold" size={13} color={colors.muted}>{q.trim() ? t('اقتراحات') : cat ? t('قطع {0}', t(cat)) : t('الأكتر طلباً')}</T>
+              <View style={[{ backgroundColor: colors.surface, borderRadius: 20, overflow: 'hidden' }, lift]}>
+                {suggestions.map((c, i) => (
                   <Press key={c.part} onPress={() => add(c.part)} label={c.part}
-                    style={[{ width: '31%', flexGrow: 1, backgroundColor: colors.surface, borderRadius: 18, paddingVertical: 14, alignItems: 'center', gap: 8 }, lift]}>
-                    <View style={{ width: 46, height: 46, borderRadius: 14, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' }}>
-                      <Icon set="mci" name={c.icon} size={24} />
+                    style={{ flexDirection: 'row', alignItems: 'center', gap: 14, paddingVertical: 12, paddingHorizontal: 14, borderTopWidth: i ? 1 : 0, borderColor: colors.line }}>
+                    <View style={{ width: 42, height: 42, borderRadius: 13, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' }}>
+                      <Icon set="mci" name={c.icon} size={22} color={colors.brand} />
                     </View>
-                    <T size={12.5} w="medium" center numberOfLines={1}>{t(c.part)}</T>
+                    <T size={15} w="medium" style={{ flex: 1 }} numberOfLines={1}>{t(c.part)}</T>
+                    <Icon name="add" size={18} color={colors.primaryText} />
                   </Press>
                 ))}
               </View>
             </>
           ) : kind === 'details' ? (
             <>
-              <T w="bold" size={28} style={{ lineHeight: 38, letterSpacing: -0.4 }}>{t('تفاصيل القطع')}</T>
-              <Muted size={14} style={{ marginTop: -10 }}>{t('التفاصيل الأوضح بتجيب سعر أدق، والصورة بتفرق جداً.')}</Muted>
+              <Muted size={14}>{t('التفاصيل الأوضح بتجيب سعر أدق.')}</Muted>
               {items.map((it, i) => (
                 <View key={it.key} style={[{ backgroundColor: colors.surface, borderRadius: 18, padding: 16, gap: 14 }, lift]}>
                   <Row gap={10}>
@@ -263,13 +281,6 @@ export default function NewRequest() {
                   </Row>
                   {partIsSided(it.part) ? <Chips options={SIDE_OPTS} selected={[it.side]} onPick={(v) => upd(it.key, { side: it.side === v ? '' : v })} /> : null}
                   <Seg options={[{ v: 'any', label: t('جديد أو مستعمل') }, { v: 'used', label: t('مستعمل بس') }, { v: 'new', label: t('جديد بس') }]} value={it.cond} onPick={(v) => upd(it.key, { cond: v as Cond })} />
-                  <Press onPress={async () => { try { const uri = await pickPhoto(); if (uri) upd(it.key, { photo: uri }); } catch { toast(t('الصورة دي مش مدعومة. اختار صورة JPG أو PNG.')); } }}
-                    style={{ flexDirection: 'row', alignItems: 'center', gap: 12, padding: 10, borderRadius: 16, borderWidth: 1.5, borderStyle: 'dashed', borderColor: it.photo ? colors.good : colors.line }}>
-                    {it.photo ? <Image source={{ uri: it.photo }} style={{ width: 44, height: 44, borderRadius: 10 }} /> : (
-                      <View style={{ width: 44, height: 44, borderRadius: 10, backgroundColor: colors.accentSoft, alignItems: 'center', justifyContent: 'center' }}><Icon name="camera" size={20} color={colors.accentDeep} /></View>
-                    )}
-                    <T size={13.5} w="medium" style={{ flex: 1 }}>{it.photo ? t('الصورة اتضافت · تغيير') : t('صوّر القطعة القديمة (اختياري)')}</T>
-                  </Press>
                   <Field value={it.notes} onChangeText={(v) => upd(it.key, { notes: v })} placeholder={t('ملاحظة للمحل (اختياري)')} />
                   <Field value={it.pn ?? ''} onChangeText={(v) => upd(it.key, { pn: v })} ltr placeholder={t('رقم القطعة / OEM (اختياري)')} />
                 </View>
@@ -277,7 +288,6 @@ export default function NewRequest() {
             </>
           ) : kind === 'car' ? (
             <>
-              <T w="bold" size={28} style={{ lineHeight: 38, letterSpacing: -0.4 }}>{t('لأنهي عربية؟')}</T>
               <View style={{ gap: 10 }}>
                 {cars.map((c) => {
                   const on = c.key === car.key;
@@ -295,9 +305,8 @@ export default function NewRequest() {
             </>
           ) : (
             <>
-              <T w="bold" size={28} style={{ lineHeight: 38, letterSpacing: -0.4 }}>{t('مراجعة الطلب')}</T>
-              <View style={[{ backgroundColor: colors.surface, borderRadius: 18, overflow: 'hidden' }, lift]}>
-                <View style={{ backgroundColor: colors.ink, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
+              <View style={[{ backgroundColor: colors.surface, borderRadius: 20, overflow: 'hidden' }, lift]}>
+                <View style={{ backgroundColor: colors.brand, padding: 16, flexDirection: 'row', alignItems: 'center', gap: 12 }}>
                   <Plate top={car.model || '—'} bottom={carYear(car.year)} size="sm" />
                   <View style={{ flex: 1 }}>
                     <T w="semibold" color="#fff">{car.make} {car.model}</T>
@@ -319,7 +328,7 @@ export default function NewRequest() {
               </View>
               <View style={[{ backgroundColor: colors.surface, borderRadius: 18, padding: 14, gap: 10 }, lift]}>
                 <Row gap={10}>
-                  <Icon name="construct-outline" size={20} color={colors.primary} />
+                  <Icon name="construct-outline" size={20} color={colors.primaryText} />
                   <T w="semibold" size={15} style={{ flex: 1 }}>{t('عايز المحل يركّبها كمان؟')}</T>
                 </Row>
                 <Seg options={[{ v: 'no', label: t('القطعة بس') }, { v: 'yes', label: t('القطعة + التركيب') }]} value={wantsInstall ? 'yes' : 'no'} onPick={(v) => setWantsInstall(v === 'yes')} />
@@ -335,14 +344,27 @@ export default function NewRequest() {
         </Animated.View>
       </ScrollView>
 
-      <View style={[{ backgroundColor: colors.surface, paddingTop: 12, paddingBottom: insets.bottom + 12, borderTopLeftRadius: 24, borderTopRightRadius: 24 }, lift]}>
-        <View style={{ width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 18 }}>
-          <Btn kind={step === last ? 'accent' : 'primary'} icon={step === last ? 'paper-plane' : 'arrow-back'} loading={busy} disabled={!canNext}
+      <View style={[{ backgroundColor: colors.surface, paddingTop: 12, paddingBottom: insets.bottom + 12, borderTopWidth: 1, borderColor: colors.line }, liftStrong]}>
+        <View style={{ width: '100%', maxWidth: 560, alignSelf: 'center', paddingHorizontal: 20 }}>
+          <Btn kind="primary" icon={step === last ? 'paper-plane' : 'arrow-back'} loading={busy} disabled={!canNext}
             title={step === 0 ? (items.length ? t('التالي · {0} {1}', ar(items.length), items.length > 1 ? 'قطع' : 'قطعة') : t('ضيف قطعة الأول')) : step === last ? t('ابعت للمحلات') : t('التالي')}
             onPress={next} />
         </View>
       </View>
       <ToastHost bottom={100} />
+      {sent ? <Moment title={t('طلبك وصل للمحلات')} text={t('هنبعتلك أول ما حد يرد، وغالباً خلال ساعة.')} onDone={() => router.replace(`/customer/${sent.id}`)} /> : null}
+    </View>
+  );
+}
+
+/** One progress segment: its sky fill springs in when the step is reached. */
+function ProgressSeg({ on }: { on: boolean }) {
+  const a = useRef(new Animated.Value(on ? 1 : 0)).current;
+  useEffect(() => { springTo(a, on ? 1 : 0, 'snappy', Platform.OS !== 'web').start(); }, [on, a]);
+  const rtl = dir() === 'rtl';
+  return (
+    <View style={{ flex: 1, height: 4, borderRadius: 2, backgroundColor: colors.line, overflow: 'hidden' }}>
+      <Animated.View style={{ position: 'absolute', top: 0, bottom: 0, left: 0, right: 0, backgroundColor: colors.primary, transform: [{ translateX: a.interpolate({ inputRange: [0, 1], outputRange: [rtl ? 400 : -400, 0] }) }] }} />
     </View>
   );
 }

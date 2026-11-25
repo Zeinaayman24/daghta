@@ -5,11 +5,11 @@ import { PushPrompt } from '@/components/PushPrompt';
 import { LegalLinks } from '@/components/LegalLinks';
 import { isFeatured } from '@/components/AdBanner';
 import { Redirect, router, useLocalSearchParams } from 'expo-router';
-import { useEffect, useRef, useState } from 'react';
+import React, { useEffect, useRef, useState } from 'react';
 import { Animated, Easing, Image, Platform, Pressable, View } from 'react-native';
 import { PaymentPicker, payOptions, type Handover } from '@/components/Payment';
 import {
-  BackBar, Btn, Chips, Empty, Field, Icon, Lines, Loading, Muted, Photo, Pill, Press, Row, Screen, Seg, Sheet, T, TabPills, toast,
+  BackBar, Btn, Chips, Empty, Enter, Field, Icon, Lines, Loading, Muted, Photo, Pill, Press, Row, Screen, Seg, Sheet, T, TabPills, toast,
 } from '@/components/ui';
 import { useAuth } from '@/lib/auth';
 import {
@@ -21,7 +21,8 @@ import { depositFor, depositRules, payByCard, type DepositRules } from '@/lib/pa
 import { pickPhoto, uploadPhoto } from '@/lib/photos';
 import { must, useLive, useNow } from '@/lib/live';
 import { photoUrl, supabase } from '@/lib/supabase';
-import { colors, lift } from '@/lib/theme';
+import { colors, lift, liftHover } from '@/lib/theme';
+import { springTo } from '@/lib/motion';
 import { t } from '@/lib/i18n';
 import { carLabel } from '@/lib/catalogue';
 
@@ -50,6 +51,7 @@ export default function PriceRequest() {
   const [askCancel, setAskCancel] = useState(false);
   const [guarantee, setGuarantee] = useState(false);
   const [editing, setEditing] = useState<Request | null>(null);
+  const [more, setMore] = useState<{ q: Quote; p: Request } | null>(null); // long-press on an offer: the shop's actions
   const now = useNow(60000);
   const [rules, setRules] = useState<DepositRules | null>(null);
   useEffect(() => { depositRules().then(setRules); }, []);
@@ -255,7 +257,7 @@ export default function PriceRequest() {
                   const on = sort === o.v;
                   return (
                     <Press key={o.v} onPress={() => setSort(o.v)} selected={on} label={t('رتّب: ') + o.label}
-                      style={{ height: 36, paddingHorizontal: 14, borderRadius: 18, justifyContent: 'center', backgroundColor: on ? colors.ink : colors.surface, borderWidth: 1, borderColor: on ? colors.ink : '#D5DAE1' }}>
+                      style={{ height: 38, paddingHorizontal: 14, borderRadius: 999, justifyContent: 'center', backgroundColor: on ? colors.brand : colors.surface, borderWidth: 1.5, borderColor: on ? colors.brand : colors.line }}>
                       <T size={14} w={on ? 'semibold' : 'regular'} color={on ? '#fff' : colors.ink}>{o.label}</T>
                     </Press>
                   );
@@ -266,15 +268,18 @@ export default function PriceRequest() {
               <Row gap={6}>
                 <Icon name="shield-checkmark" size={16} color={colors.good} />
                 <T size={13} color={colors.good} style={{ flexShrink: 1 }}>{t('كل العروض محمية بضمان ضغطة لما تأكّد من التطبيق')}</T>
-                <T size={13} w="semibold" color={colors.primary}>{t('إيه ده؟')}</T>
+                <T size={13} w="semibold" color={colors.primaryText}>{t('إيه ده؟')}</T>
               </Row>
             </Pressable>
-            <View style={{ gap: 10 }}>
-              {sorted(qs, p).map((q) => (
-                <OfferRow key={q.id} q={q} shop={d.shops[q.shop_id]} card={d.cards[q.shop_id]} fee={d.fees[q.id]} on={sel[p.id] === q.id}
-                  cheapest={liveQs.length > 1 && !expiredQ(q) && liveQs.findIndex((x) => totalOf(x, p) === low) === liveQs.indexOf(q)} featured={q.id === feat}
-                  expired={expiredQ(q)} now={now} qty={p.qty || 1}
-                  onPick={() => pick(p, q)} onChat={() => router.push(`/chat/${p.id}/${q.shop_id}`)} />
+            <View style={{ gap: 12 }}>
+              {sorted(qs, p).map((q, i) => (
+                <Enter key={q.id} i={i}>
+                  <OfferRow q={q} shop={d.shops[q.shop_id]} card={d.cards[q.shop_id]} fee={d.fees[q.id]} on={sel[p.id] === q.id} dim={!!sel[p.id] && sel[p.id] !== q.id}
+                    cheapest={liveQs.length > 1 && !expiredQ(q) && liveQs.findIndex((x) => totalOf(x, p) === low) === liveQs.indexOf(q)} featured={q.id === feat}
+                    diff={liveQs.length > 1 && !expiredQ(q) ? totalOf(q, p) - low : undefined} span={liveQs.length > 1 ? Math.max(...liveQs.map((y) => totalOf(y, p))) - low : 0}
+                    expired={expiredQ(q)} now={now} qty={p.qty || 1}
+                    onPick={() => pick(p, q)} onChat={() => router.push(`/chat/${p.id}/${q.shop_id}`)} onMore={() => setMore({ q, p })} />
+                </Enter>
               ))}
             </View>
             {p.wants_install && qs.length && !qs.some((q) => q.install_available) ? (
@@ -427,13 +432,15 @@ export default function PriceRequest() {
 
   /* ---------------------------------------------------------------- page */
   const footer = chosen.length ? (
-    <Row gap={12}>
-      <View style={{ flex: 1 }}>
-        <Muted size={13}>{t('اخترت')}{' '}{ar(chosen.length)} {t('من')}{' '}{ar(open.length)}</Muted>
-        <T w="bold" size={19}>{money(partsTotal)} {t('ج.م')}</T>
-      </View>
-      <Btn title={t('كمّل الأوردر')} onPress={() => setStep('checkout')} style={{ minWidth: 160 }} />
-    </Row>
+    <Rise>
+      <Row gap={12}>
+        <View style={{ flex: 1 }}>
+          <T w="display" size={22}>{money(partsTotal)} <T size={13} color={colors.muted}>{t('ج.م')}</T></T>
+          <Muted size={12.5}>{t('اخترت')}{' '}{ar(chosen.length)} {t('من')}{' '}{ar(open.length)}</Muted>
+        </View>
+        <Btn title={t('كمّل الأوردر')} onPress={() => setStep('checkout')} style={{ minWidth: 170 }} />
+      </Row>
+    </Rise>
   ) : undefined;
   const withOffers = d.parts.filter((p) => quotesOf(p).some((q) => !expiredQ(q)) && p.status === 'open').length;
   const liveCount = d.quotes.filter((q) => !expiredQ(q) && open.some((p) => p.id === q.request_id)).length;
@@ -471,6 +478,21 @@ export default function PriceRequest() {
       <ConfirmSheet open={askCancel} title={t('تلغي الطلب؟')} body={t('المحلات مش هتقدر تبعت عروض تاني.')} yes={t('أيوه، الغي')} danger busy={busy} onYes={cancelOpen} onClose={() => setAskCancel(false)} />
       <GuaranteeSheet open={guarantee} onClose={() => setGuarantee(false)} />
       {editing ? <EditRequest part={editing} onClose={() => setEditing(null)} /> : null}
+      {more ? (
+        <Sheet open onClose={() => setMore(null)} title={d.cards[more.q.shop_id]?.name ?? t('محل موثّق')}>
+          <View style={{ gap: 4 }}>
+            {[
+              { icon: 'chatbubble-ellipses', label: t('اسأل المحل'), go: () => router.push(`/chat/${more.p.id}/${more.q.shop_id}`) },
+              { icon: 'storefront', label: t('شوف المحل والتقييمات'), go: () => router.push(`/shop-profile/${more.q.shop_id}`) },
+              { icon: 'shield-checkmark', label: t('ضمان ضغطة: إيه اللي بيغطيه؟'), go: () => setGuarantee(true) },
+            ].map((a) => (
+              <Press key={a.label} onPress={() => { setMore(null); a.go(); }} style={{ flexDirection: 'row', alignItems: 'center', gap: 12, paddingVertical: 14, borderBottomWidth: 1, borderColor: colors.line }}>
+                <Icon name={a.icon} size={20} color={colors.brand} /><T size={15} w="semibold">{a.label}</T>
+              </Press>
+            ))}
+          </View>
+        </Sheet>
+      ) : null}
 
     </Screen>
   );
@@ -489,60 +511,86 @@ function ShopLine({ name, card, sub }: { name: string; card?: ShopCard; sub?: st
   );
 }
 
-/** One offer as its own card: shop and rating, the price large on the far side, then condition, warranty and delivery as tags. */
-function OfferRow({ q, card, fee, on, cheapest, featured, expired, now, qty, onPick, onChat }: {
-  q: Quote; shop?: Shop; card?: ShopCard; fee?: number | null; on: boolean; cheapest: boolean; featured: boolean; expired: boolean; now: number; qty: number;
-  onPick: () => void; onChat: () => void;
+/**
+ * One offer as a comparison row: the price first and large, how far it is from the cheapest, then the fixed strip
+ * (condition · warranty · delivery), then the shop. Selecting lifts it and dims the others; press and hold for the shop's actions.
+ */
+function OfferRow({ q, card, fee, on, dim, cheapest, featured, expired, now, qty, diff, span, onPick, onChat, onMore }: {
+  q: Quote; shop?: Shop; card?: ShopCard; fee?: number | null; on: boolean; dim?: boolean; cheapest: boolean; featured: boolean; expired: boolean; now: number; qty: number;
+  diff?: number; span?: number; onPick: () => void; onChat: () => void; onMore: () => void;
 }) {
-  const tags = [[q.brand, CONDITIONS[q.condition]].filter(Boolean).join(' · '), warrantyLabel(q.warranty_days), fee != null ? t('توصيل {0} ج.م', money(fee)) : t('استلام من المحل بس'),
-    q.install_available ? (q.install_fee != null ? t('+ تركيب {0} ج.م', money(q.install_fee)) : t('تركيب متاح · السعر بعد المعاينة')) : ''];
+  const strip = [
+    { icon: 'cube', text: [q.brand, CONDITIONS[q.condition]].filter(Boolean).join(' · ') },
+    { icon: 'shield-checkmark', text: warrantyLabel(q.warranty_days) },
+    { icon: fee != null ? 'bicycle' : 'storefront', text: fee != null ? t('توصيل {0} ج.م', money(fee)) : t('استلام من المحل') },
+  ];
+  const install = q.install_available ? (q.install_fee != null ? t('+ تركيب {0} ج.م', money(q.install_fee)) : t('تركيب متاح · السعر بعد المعاينة')) : '';
   const left = new Date(q.expires_at).getTime() - now;
   const soon = !expired && left < 6 * 3600000;
   const leftText = left >= 3600000 ? t('{0} ساعة', ar(Math.floor(left / 3600000))) : t('{0} دقيقة', ar(Math.max(1, Math.ceil(left / 60000))));
   const rating = card?.rating ? `★ ${ar(card.rating.toFixed(1)).replace('.', t('٫'))}` : '';
+  const pct = diff != null && span ? Math.max(0.06, diff / span) : 0;
+  const check = useRef(new Animated.Value(on ? 1 : 0)).current;
+  const lift1 = useRef(new Animated.Value(on ? 1 : 0)).current;
+  useEffect(() => { springTo(check, on ? 1 : 0, 'bouncy').start(); springTo(lift1, on ? 1 : 0, 'soft', false).start(); }, [on, check, lift1]);
+  const bar = useRef(new Animated.Value(0)).current;
+  useEffect(() => { Animated.timing(bar, { toValue: pct, duration: 600, delay: 300, useNativeDriver: false }).start(); }, [pct, bar]);
   return (
-    <Press onPress={onPick} selected={on} label={t('عرض {0} جنيه', money(q.price))}
-      style={{ gap: 12, padding: 16, borderRadius: 16, backgroundColor: colors.surface, borderWidth: on ? 2 : 1, borderColor: on ? colors.primary : colors.line, opacity: expired ? 0.55 : 1 }}>
-      <Row gap={12} style={{ alignItems: 'flex-start' }}>
-        <View style={{ width: 24, height: 24, marginTop: 2, borderRadius: 12, borderWidth: on ? 7 : 2, borderColor: on ? colors.primary : '#C9D0DA' }} />
-        {card?.photo_path ? <Image source={{ uri: photoUrl(card.photo_path)! }} style={{ width: 40, height: 40, borderRadius: 12, backgroundColor: colors.soft }} accessibilityLabel={t('صورة المحل')} /> : null}
-        <View style={{ flex: 1, gap: 2, minWidth: 0 }}>
-          <Pressable onPress={() => router.push(`/shop-profile/${q.shop_id}`)} hitSlop={4} accessibilityRole="link">
-            <T w="semibold" size={16} numberOfLines={1}>{card?.name ?? t('محل موثّق')}</T>
-          </Pressable>
-          <Muted size={13} numberOfLines={1}>{[rating, replyLabel(card?.reply_min)].filter(Boolean).join(' · ')}</Muted>
-        </View>
-        <View style={{ alignItems: 'flex-end', gap: 4 }}>
-          <Row gap={4} style={{ alignItems: 'baseline' }}>
-            <T w="bold" size={22} style={{ lineHeight: 30 }}>{money(q.price)}</T>
-            <T size={13} color={colors.muted}>{t('ج.م')}{qty > 1 ? t(' للقطعة') : ''}</T>
-          </Row>
-          {expired ? <Pill label={t('العرض انتهى')} tone="plain" /> : featured ? <Pill label={t('مميّز · إعلان')} tone="plain" /> : cheapest ? <Pill label={t('الأرخص')} tone="good" /> : null}
-        </View>
-      </Row>
-      <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6, paddingStart: 36 }}>
-        {tags.filter(Boolean).map((t) => (
-          <View key={t} style={{ backgroundColor: colors.soft, borderRadius: 8, paddingHorizontal: 10, paddingVertical: 3 }}>
-            <T size={12.5} style={{ lineHeight: 19 }}>{t}</T>
+    <Press onPress={onPick} onLongPress={expired ? undefined : onMore} selected={on} label={t('عرض {0} جنيه', money(q.price))}
+      style={{ opacity: expired ? 0.5 : dim ? 0.6 : 1 }}>
+      <Animated.View style={[{ gap: 12, padding: 16, borderRadius: 20, backgroundColor: colors.surface, borderWidth: 1.5, borderColor: on ? colors.primary : colors.line, transform: [{ translateY: lift1.interpolate({ inputRange: [0, 1], outputRange: [0, -2] }) }] }, on && liftHover]}>
+        <Row gap={12} style={{ alignItems: 'flex-start' }}>
+          <View style={{ flex: 1, minWidth: 0, gap: 2 }}>
+            <Row gap={5} style={{ alignItems: 'baseline' }}>
+              <T w="display" size={26} style={{ lineHeight: 32 }}>{money(q.price)}</T>
+              <T size={13} color={colors.muted}>{t('ج.م')}{qty > 1 ? t(' للقطعة') : ''}</T>
+            </Row>
+            {expired ? <Pill label={t('العرض انتهى')} tone="plain" /> : featured ? <Pill label={t('مميّز · إعلان')} tone="plain" /> : cheapest ? <Pill label={t('الأرخص')} tone="good" /> : diff ? <Muted size={12.5}>+{money(diff)} {t('ج.م')} {t('عن الأرخص')}</Muted> : null}
           </View>
-        ))}
-      </View>
-      {q.note || q.photo_path || !expired ? (
-        <Row gap={10} style={{ paddingStart: 36 }}>
-          {q.photo_path ? <Photo uri={photoUrl(q.photo_path)} size={44} /> : null}
-          <View style={{ flex: 1, gap: 2 }}>
-            {q.note ? <Muted size={13}>«{q.note}»</Muted> : null}
-            {soon ? <T size={12.5} color={colors.warn}>{t('العرض بينتهي بعد')}{' '}{leftText}</T> : null}
+          <View style={{ width: 26, height: 26, borderRadius: 13, borderWidth: 2, borderColor: on ? colors.primary : colors.line, backgroundColor: on ? colors.primary : colors.surface, alignItems: 'center', justifyContent: 'center' }}>
+            <Animated.View style={{ transform: [{ scale: check }] }}><Icon name="checkmark" size={15} color={colors.brand} stroke={3} /></Animated.View>
           </View>
+        </Row>
+        {diff != null && span ? (
+          <View style={{ height: 5, borderRadius: 3, backgroundColor: colors.ground, overflow: 'hidden' }}>
+            <Animated.View style={{ height: 5, borderRadius: 3, backgroundColor: cheapest ? colors.lime : colors.primary, width: bar.interpolate({ inputRange: [0, 1], outputRange: ['0%', '100%'] }) }} />
+          </View>
+        ) : null}
+        <View style={{ flexDirection: 'row', flexWrap: 'wrap', gap: 6 }}>
+          {strip.map((x) => (
+            <View key={x.icon} style={{ flexDirection: 'row', alignItems: 'center', gap: 5, backgroundColor: colors.ground, borderRadius: 999, paddingHorizontal: 10, height: 28 }}>
+              <Icon name={x.icon} size={13} color={colors.muted} /><T size={12.5} style={{ lineHeight: 18 }}>{x.text}</T>
+            </View>
+          ))}
+          {install ? <View style={{ backgroundColor: colors.primarySoft, borderRadius: 999, paddingHorizontal: 10, height: 28, justifyContent: 'center' }}><T size={12.5} color={colors.primaryText} style={{ lineHeight: 18 }}>{install}</T></View> : null}
+        </View>
+        <Row gap={10}>
+          {card?.photo_path ? <Image source={{ uri: photoUrl(card.photo_path)! }} style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.soft }} accessibilityLabel={t('صورة المحل')} />
+            : <View style={{ width: 34, height: 34, borderRadius: 10, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center' }}><Icon name="storefront" size={17} color={colors.brand} /></View>}
+          <View style={{ flex: 1, minWidth: 0 }}>
+            <Pressable onPress={() => router.push(`/shop-profile/${q.shop_id}`)} hitSlop={4} accessibilityRole="link">
+              <T w="semibold" size={14.5} numberOfLines={1}>{card?.name ?? t('محل موثّق')}</T>
+            </Pressable>
+            <Muted size={12} numberOfLines={1}>{[rating, replyLabel(card?.reply_min), q.note ? `«${q.note}»` : ''].filter(Boolean).join(' · ')}</Muted>
+          </View>
+          {q.photo_path ? <Photo uri={photoUrl(q.photo_path)} size={34} /> : null}
           {!expired ? (
-            <Pressable onPress={onChat} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('اسأل المحل')}>
-              <Row gap={4}><Icon name="chatbubble-ellipses" size={15} color={colors.primary} /><T size={13.5} w="medium" color={colors.primary}>{t('اسأل المحل')}</T></Row>
+            <Pressable onPress={onChat} hitSlop={8} accessibilityRole="button" accessibilityLabel={t('اسأل المحل')} style={{ flexDirection: 'row', alignItems: 'center', gap: 4 }}>
+              <Icon name="chatbubble-ellipses" size={16} color={colors.primaryText} /><T size={13} w="semibold" color={colors.primaryText}>{t('اسأل')}</T>
             </Pressable>
           ) : null}
         </Row>
-      ) : null}
+        {soon ? <T size={12.5} color={colors.warn}>{t('العرض بينتهي بعد')}{' '}{leftText}</T> : null}
+      </Animated.View>
     </Press>
   );
+}
+
+/** The accept bar rises from below the first time something is chosen. */
+function Rise({ children }: { children: React.ReactNode }) {
+  const y = useRef(new Animated.Value(90)).current;
+  useEffect(() => { springTo(y, 0, 'soft').start(); }, [y]);
+  return <Animated.View style={{ transform: [{ translateY: y }] }}>{children}</Animated.View>;
 }
 
 /** How long ago the request went out, ticking: the app is about speed. */

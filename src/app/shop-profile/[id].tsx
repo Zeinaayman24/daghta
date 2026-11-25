@@ -69,41 +69,39 @@ export default function ShopProfile() {
     : o.price_from != null && o.price_to != null && o.price_to > o.price_from ? t('من {0} لـ {1} ج.م', money(o.price_from), money(o.price_to))
     : o.price_from != null ? t('من {0} ج.م', money(o.price_from)) : t('اسأل المحل');
 
+  const footer = s ? (
+    <Row gap={8}>
+      {s.phone ? <Btn icon="call-outline" title={t('اتصل')} onPress={() => Linking.openURL(`tel:${s.phone}`)} style={{ flex: 1 }} /> : null}
+      {s.visible !== false && s.lat != null && s.lng != null ? <Btn kind="secondary" icon="navigate-outline" title={t('الاتجاهات')} onPress={() => Linking.openURL(directionsUrl(s.lat!, s.lng!))} style={{ flex: 1 }} /> : null}
+      {s.installs && profile?.is_customer && uid !== id ? <Btn kind="secondary" icon="construct-outline" title={t('اطلب تركيب')} onPress={() => router.push({ pathname: '/install/new', params: { shop: id } })} style={{ flex: 1 }} /> : null}
+    </Row>
+  ) : undefined;
   return (
-    <Screen>
-      <BackBar title={t('المحل')} onBack={back} />
-      <Row gap={14} style={{ alignItems: 'flex-start' }}>
-        <View style={{ width: 72, height: 72, borderRadius: 20, backgroundColor: colors.soft, alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
-          {photo ? <Image source={{ uri: photoUrl(photo)! }} style={{ width: 72, height: 72 }} accessibilityLabel={t('صورة المحل')} /> : <Icon name="storefront" size={30} />}
-        </View>
-        <View style={{ flex: 1, gap: 2 }}>
-          <T w="bold" size={20}>{name}</T>
-          <Muted size={13}>{[s?.area ?? old?.area, s?.governorate ?? old?.governorate, kmLabel(s?.km)].filter(Boolean).join(' · ')}</Muted>
-          {old?.reply_min != null ? <Muted size={12.5}>{replyLabel(old.reply_min)}</Muted> : null}
-          <Row gap={6} style={{ marginTop: 4, flexWrap: 'wrap' }}>
-            <Pill label={t('موثّق من ضغطة')} tone="good" icon="shield-checkmark" />
-            {s ? <Pill label={serviceKind(s)} tone={s.installs ? 'new' : 'plain'} /> : null}
-            {s?.featured ? <Pill label={t('محل مميز')} icon="star" tone="wait" /> : null}
-          </Row>
-        </View>
-        {profile?.is_customer && uid !== id ? (
-          <Pressable onPress={toggleFav} accessibilityLabel={data!.fav ? t('شيل من المفضلة') : t('أضف للمفضلة')} hitSlop={8}
-            style={{ width: 44, height: 44, borderRadius: 22, backgroundColor: colors.card, alignItems: 'center', justifyContent: 'center' }}>
-            <Icon name={data!.fav ? 'heart' : 'heart-outline'} size={22} color={data!.fav ? colors.bad : colors.ink} />
-          </Pressable>
-        ) : null}
-      </Row>
-
-      {s ? (
-        <Row gap={8}>
-          {s.phone ? <Btn icon="call-outline" title={t('اتصل')} onPress={() => Linking.openURL(`tel:${s.phone}`)} style={{ flex: 1 }} /> : null}
-          {s.visible !== false && s.lat != null && s.lng != null ? <Btn kind="secondary" icon="navigate-outline" title={t('الاتجاهات')} onPress={() => Linking.openURL(directionsUrl(s.lat!, s.lng!))} style={{ flex: 1 }} /> : null}
+    <Screen footer={footer}>
+      <BackBar title={t('المحل')} onBack={back} right={profile?.is_customer && uid !== id ? (
+        <Pressable onPress={toggleFav} accessibilityLabel={data!.fav ? t('شيل من المفضلة') : t('أضف للمفضلة')} hitSlop={8}
+          style={{ width: 40, height: 40, borderRadius: 20, backgroundColor: 'rgba(255,255,255,.14)', alignItems: 'center', justifyContent: 'center' }}>
+          <Icon name={data!.fav ? 'heart' : 'heart-outline'} size={21} color={data!.fav ? colors.bad : '#fff'} />
+        </Pressable>
+      ) : undefined} />
+      {/* the identity band: continues the navy of the header, then the content starts on the ground */}
+      <View style={{ marginHorizontal: -20, marginTop: -20, paddingHorizontal: 20, paddingTop: 4, paddingBottom: 20, backgroundColor: colors.brand, borderBottomLeftRadius: 24, borderBottomRightRadius: 24 }}>
+        <Row gap={14} style={{ alignItems: 'flex-start' }}>
+          <View style={{ width: 72, height: 72, borderRadius: 22, backgroundColor: 'rgba(255,255,255,.12)', alignItems: 'center', justifyContent: 'center', overflow: 'hidden' }}>
+            {photo ? <Image source={{ uri: photoUrl(photo)! }} style={{ width: 72, height: 72 }} accessibilityLabel={t('صورة المحل')} /> : <Icon name="storefront" size={30} color="#fff" />}
+          </View>
+          <View style={{ flex: 1, gap: 3 }}>
+            <T w="display" size={22} color="#fff" style={{ lineHeight: 30 }}>{name}</T>
+            <T size={13} color="rgba(255,255,255,.72)">{[s?.area ?? old?.area, s?.governorate ?? old?.governorate, kmLabel(s?.km)].filter(Boolean).join(' · ')}{old?.reply_min != null ? ` · ${replyLabel(old.reply_min)}` : ''}</T>
+            <Row gap={6} style={{ marginTop: 4, flexWrap: 'wrap' }}>
+              <Pill label={t('موثّق من ضغطة')} tone="good" icon="shield-checkmark" />
+              {s ? <Pill label={serviceKind(s)} tone={s.installs ? 'new' : 'plain'} /> : null}
+              {s?.featured ? <Pill label={t('محل مميز')} icon="star" tone="wait" /> : null}
+            </Row>
+          </View>
         </Row>
-      ) : null}
+      </View>
       {s && s.visible === false ? <Muted size={13}>{t('اسم المحل ورقمه وعنوانه بالظبط بيظهروا بعد ما تطلب منه.')}</Muted> : null}
-      {s?.installs && profile?.is_customer && uid !== id ? (
-        <Btn kind="secondary" icon="construct-outline" title={t('اطلب تركيب من المحل ده')} onPress={() => router.push({ pathname: '/install/new', params: { shop: id } })} />
-      ) : null}
 
       <Stats items={[
         [(s?.rating ?? data?.legacy?.rating) ? ar((s?.rating ?? data?.legacy?.rating)!) + ' ★' : '—',

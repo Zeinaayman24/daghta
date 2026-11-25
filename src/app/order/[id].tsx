@@ -6,7 +6,8 @@ import { ConfirmSheet } from '@/components/Confirm';
 import { DepositPanel } from '@/components/Deposit';
 import { PaymentPanel } from '@/components/Payment';
 import { ReceiptButton } from '@/components/ReceiptButton';
-import { BackBar, Btn, Card, Chips, Empty, Field, Icon, IconButton, Lines, Loading, Muted, Photo, Press, Row, Screen, Sheet, T, toast } from '@/components/ui';
+import { BackBar, Btn, Card, Chips, Empty, Field, Icon, IconButton, Lines, Loading, Muted, Photo, Press, Row, Screen, Sheet, Steps, T, toast } from '@/components/ui';
+import { Moment } from '@/components/Moment';
 import { useAuth } from '@/lib/auth';
 import {
   CONDITIONS, ORDER_LABEL, ORDER_STEP_NAME, warrantyLabel, orderStep, orderTitle, addressLine, ago, ar, friendlyError, money, orderNo, orderSteps,
@@ -29,6 +30,8 @@ export default function OrderPage() {
   const [stars, setStars] = useState(0);
   const [review, setReview] = useState('');
   const [ask, setAsk] = useState<'received' | 'cancel' | 'refuse' | null>(null);
+  const [moment, setMoment] = useState(false); // the lime handover moment after «استلمت»
+  const [moreCode, setMoreCode] = useState(false);
   const [reason, setReason] = useState('');
   const [other, setOther] = useState('');
   const [refPhoto, setRefPhoto] = useState<string | null>(null);
@@ -108,25 +111,16 @@ export default function OrderPage() {
     <Screen footer={footer}>
       <BackBar title={t('أوردر ') + orderNo(o.order_no)} onBack={back} />
 
-      {/* live status: light, one line of what is happening, a simple progress bar */}
-      <View style={{ backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: 18, gap: 16 }}>
+      {/* the handover code is the hero while the order is out; before that it sits lower, small */}
+      {data!.code && !unpaid && o.status !== 'received' && o.status !== 'cancelled' && isReady ? <CodeBlock code={String(data!.code)} /> : null}
+
+      {/* where the order is: a timeline that draws itself in */}
+      <View style={{ backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1, borderColor: colors.line, padding: 18, gap: 14 }}>
         <View style={{ gap: 2 }}>
-          <T w="bold" size={22} style={{ lineHeight: 32 }} color={o.status === 'cancelled' ? colors.bad : colors.ink}>{unpaid ? (depositOpen(o) ? t('ادفع العربون عشان تحجز القطعة') : t('فاضل خطوة الدفع')) : orderTitle(o)}</T>
-          <Muted size={14}>{o.delivery_mode === 'delivery' ? t('توصيل لعنوانك') : t('استلام من المحل')} {t('· آخر تحديث')}{' '}{ago(o.updated_at)}</Muted>
+          <T w="display" size={21} style={{ lineHeight: 30 }} color={o.status === 'cancelled' ? colors.bad : colors.ink}>{unpaid ? (depositOpen(o) ? t('ادفع العربون عشان تحجز القطعة') : t('فاضل خطوة الدفع')) : orderTitle(o)}</T>
+          <Muted size={13.5}>{o.delivery_mode === 'delivery' ? t('توصيل لعنوانك') : t('استلام من المحل')} {t('· آخر تحديث')}{' '}{ago(o.updated_at)}</Muted>
         </View>
-        {o.status !== 'cancelled' ? (
-          <Row gap={6}>
-            {steps.map((st, i) => {
-              const done = i <= at;
-              return (
-                <View key={st} style={{ flex: 1, gap: 8 }}>
-                  <View style={{ height: 5, borderRadius: 3, backgroundColor: done ? (o.status === 'received' ? colors.good : colors.primary) : '#E3E7EC' }} />
-                  <T size={13} w={i === at ? 'semibold' : 'regular'} color={done ? colors.ink : colors.faint}>{ORDER_STEP_NAME[st]}</T>
-                </View>
-              );
-            })}
-          </Row>
-        ) : null}
+        {o.status !== 'cancelled' ? <Steps items={steps.map((st) => ORDER_STEP_NAME[st])} current={o.status === 'received' ? -1 : at} /> : null}
       </View>
 
       {done && o.status !== 'cancelled' ? (
@@ -136,12 +130,18 @@ export default function OrderPage() {
         </Row>
       ) : null}
 
+      {data!.code && !unpaid && o.status !== 'received' && o.status !== 'cancelled' && !isReady ? (
+        <Row gap={12} style={{ backgroundColor: colors.surface, borderRadius: 20, borderWidth: 1, borderColor: colors.line, padding: 14 }}>
+          <View style={{ flex: 1 }}><T w="semibold" size={14}>{t('كود الاستلام')}</T><Muted size={12.5}>{t('هيبقى كبير هنا لما القطعة تجهز')}</Muted></View>
+          <T w="display" size={20} style={{ letterSpacing: 4, writingDirection: 'ltr' }} selectable>{String(data!.code)}</T>
+        </Row>
+      ) : null}
       {data!.code && !unpaid && o.status !== 'received' && o.status !== 'cancelled' ? (
-        <View style={{ backgroundColor: colors.surface, borderRadius: 16, borderWidth: 1, borderColor: colors.line, padding: 20, gap: 8, alignItems: 'center' }}>
-          <Muted size={14}>{t('كود الاستلام')}</Muted>
-          <T w="display" size={44} style={{ letterSpacing: 10, lineHeight: 56, writingDirection: 'ltr' }} selectable>{String(data!.code)}</T>
-          <Muted size={13.5} center>{t('افحص القطعة الأول: الموديل، الجهة، الحالة، وإنها زي صورة العرض. لو زي العرض، ادّي الكود للمحل أو المندوب. بعد الكود، الاسترجاع بيكون مع المحل حسب القانون.')}</Muted>
-        </View>
+        <Press onPress={() => setMoreCode((v) => !v)} style={{ flexDirection: 'row', alignItems: 'flex-start', gap: 8 }}>
+          <Icon name="information-circle" size={16} color={colors.muted} />
+          <Muted size={13} style={{ flex: 1 }} numberOfLines={moreCode ? undefined : 1}>{t('افحص القطعة الأول: الموديل، الجهة، الحالة، وإنها زي صورة العرض. لو زي العرض، ادّي الكود للمحل أو المندوب. بعد الكود، الاسترجاع بيكون مع المحل حسب القانون.')}</Muted>
+          <T size={13} w="semibold" color={colors.primaryText}>{moreCode ? t('أقل') : t('أكتر')}</T>
+        </Press>
       ) : null}
 
       {o.refused_at ? (
@@ -254,7 +254,8 @@ export default function OrderPage() {
       </View>
 
       <ConfirmSheet open={ask === 'received'} title={t('اتأكدت إن القطعة زي العرض؟')} body={t('بعد التأكيد، الاسترجاع بيكون مع المحل حسب القانون.')} yes={t('أيوه، استلمت')} busy={busy}
-        onYes={() => rpc('receive_order', { p_order: o.id }, t('تمام. إيه رأيك في المحل؟'))} onClose={() => setAsk(null)} />
+        onYes={async () => { if (await rpc('receive_order', { p_order: o.id }, t('تمام. إيه رأيك في المحل؟'))) setMoment(true); }} onClose={() => setAsk(null)} />
+      {moment ? <Moment tone="lime" title={t('استلمت الأوردر ✓')} text={t('شكراً. قيّم المحل لو تحب، ده بيساعد اللي بعدك.')} onDone={() => setMoment(false)} /> : null}
       <ConfirmSheet open={ask === 'cancel'} title={t('تلغي الأوردر؟')}
         body={o.deposit_status === 'paid' ? t('العربون ({0} ج.م) مش هيرجع لو لغيت دلوقتي، لأن المحل حجز القطعة ليك.', money(dep))
           : o.deposit_status === 'review' ? t('لو كنت حوّلت العربون، هنراجعه ونرجّعهولك. القطع هترجع للطلب.')
@@ -275,5 +276,22 @@ export default function OrderPage() {
         </View>
       </Sheet>
     </Screen>
+  );
+}
+
+/** The handover code as the hero of the screen: navy block, one box per digit, Latin digits read left to right. */
+function CodeBlock({ code }: { code: string }) {
+  return (
+    <View style={{ backgroundColor: colors.brand, borderRadius: 20, padding: 18, gap: 10, alignItems: 'center' }}>
+      <T size={13} color="rgba(255,255,255,.7)">{t('كود الاستلام')}</T>
+      <View style={{ flexDirection: 'row', gap: 10, direction: 'ltr' }}>
+        {code.split('').map((d, i) => (
+          <View key={i} style={{ width: 52, height: 64, borderRadius: 14, backgroundColor: 'rgba(255,255,255,.1)', borderWidth: 1, borderColor: 'rgba(255,255,255,.18)', alignItems: 'center', justifyContent: 'center' }}>
+            <T w="display" size={34} color={colors.lime} selectable>{d}</T>
+          </View>
+        ))}
+      </View>
+      <T size={12} color="rgba(255,255,255,.6)" center>{t('المندوب أو المحل هيطلبه منك. متقولوش لحد تاني.')}</T>
+    </View>
   );
 }

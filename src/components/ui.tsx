@@ -9,7 +9,7 @@ import Ionicons from '@expo/vector-icons/Ionicons';
 import MaterialCommunityIcons from '@expo/vector-icons/MaterialCommunityIcons';
 import { FILLED, LINE } from './icons';
 import { bp, brand, colors, fontWeights, fonts, lift, liftStrong, radius } from '@/lib/theme';
-import { dur, ease, enter, reducedMotion, springTo } from '@/lib/motion';
+import { dur, ease, enter, reducedMotion, spring, springTo } from '@/lib/motion';
 import { dir, flipIcon, startAlign, t as tr } from '@/lib/i18n';
 
 /* ---------------------------------------------------------------- text */
@@ -41,16 +41,16 @@ const tick = () => { if (Platform.OS !== 'web') Haptics.selectionAsync().catch((
 
 /** A pressable that gives back: it sinks slightly under the finger and ticks on phones. */
 const AnimatedPressable = Animated.createAnimatedComponent(Pressable);
-export function Press({ children, onPress, style, disabled, label, role = 'button', hitSlop, selected, dim = true }: {
+export function Press({ children, onPress, onLongPress, style, disabled, label, role = 'button', hitSlop, selected, dim = true }: {
   dim?: boolean;
-  children: ReactNode; onPress?: () => void; style?: StyleProp<ViewStyle>; disabled?: boolean; label?: string;
+  children: ReactNode; onPress?: () => void; onLongPress?: () => void; style?: StyleProp<ViewStyle>; disabled?: boolean; label?: string;
   role?: 'button' | 'link' | 'tab' | 'imagebutton'; hitSlop?: number; selected?: boolean;
 }) {
   const scale = useRef(new Animated.Value(1)).current;
   // the press: sinks to 0.96 in 80 ms, springs back (snappy) on release
   const to = (v: number) => (v < 1 ? Animated.timing(scale, { toValue: v, duration: dur.instant, easing: ease.out, useNativeDriver: Platform.OS !== 'web' }) : springTo(scale, 1, 'snappy')).start();
   return (
-    <AnimatedPressable onPress={() => { tick(); onPress?.(); }} disabled={disabled || !onPress} accessibilityRole={role} accessibilityLabel={label}
+    <AnimatedPressable onPress={() => { tick(); onPress?.(); }} onLongPress={onLongPress} delayLongPress={500} disabled={disabled || !onPress} accessibilityRole={role} accessibilityLabel={label}
       accessibilityState={selected === undefined ? undefined : { selected }} hitSlop={hitSlop}
       onPressIn={() => to(reducedMotion() ? 1 : 0.96)} onPressOut={() => to(1)}
       style={[style as any, { transform: [{ scale }] }, disabled && dim && { opacity: 0.45 }]}>
@@ -262,7 +262,7 @@ export function Chips<V extends string | number>({ options, selected, onPick }: 
           <Press key={String(o.v)} onPress={() => onPick(o.v)} selected={on}
             style={[s.chip, on && { backgroundColor: colors.brand, borderColor: colors.brand }]}>
             <Row gap={6}>
-              {on ? <View style={s.tick}><Icon name="checkmark" size={11} color={colors.brand} stroke={3} /></View> : o.icon ? <Icon name={o.icon} size={15} color={colors.muted} /> : null}
+              {on ? <Tick /> : o.icon ? <Icon name={o.icon} size={15} color={colors.muted} /> : null}
               <T size={14} w={on ? 'semibold' : 'medium'} color={on ? '#fff' : colors.ink}>{o.label}</T>
             </Row>
           </Press>
@@ -270,6 +270,13 @@ export function Chips<V extends string | number>({ options, selected, onPick }: 
       })}
     </View>
   );
+}
+
+/** The lime tick on a selected chip: pops in with a bouncy spring. */
+function Tick() {
+  const a = useRef(new Animated.Value(0)).current;
+  useEffect(() => { springTo(a, 1, 'bouncy').start(); }, [a]);
+  return <Animated.View style={[s.tick, { transform: [{ scale: a }] }]}><Icon name="checkmark" size={11} color={colors.brand} stroke={3} /></Animated.View>;
 }
 
 export function Seg<V extends string | number>({ options, value, onPick }: { options: { v: V; label: string }[]; value: V; onPick: (v: V) => void }) {
@@ -441,25 +448,55 @@ export function Loading() {
   );
 }
 
-/** A vertical progress line: done steps filled, the current one ringed. */
-export function Steps({ items, current = -1 }: { items: string[]; current?: number }) {
+/**
+ * A vertical progress line: done steps filled lime, the current one ringed in sky and breathing, the rest waiting.
+ * Draws itself in: each done dot pops, then its line grows, 380 ms per step.
+ */
+export function Steps({ items, current = -1, subs }: { items: string[]; current?: number; subs?: (string | undefined)[] }) {
   return (
     <View style={{ gap: 0 }}>
-      {items.map((t, i) => {
-        const done = current >= 0 && i < current; const now = i === current;
-        return (
-          <Row key={i} style={{ alignItems: 'flex-start' }} gap={12}>
-            <View style={{ alignItems: 'center', width: 26 }}>
-              <View style={[s.stepNum, (done || current < 0) && { backgroundColor: colors.lime }, now && { backgroundColor: colors.surface, borderWidth: 2.5, borderColor: colors.primary }]}>
-                {done ? <Icon name="checkmark" size={14} color={colors.brand} stroke={3} /> : now ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary }} /> : <T w="bold" size={12} color={current < 0 ? colors.brand : colors.faint}>{[tr('١'), tr('٢'), tr('٣'), tr('٤'), tr('٥'), tr('٦')][i]}</T>}
-              </View>
-              {i < items.length - 1 ? <View style={{ width: 3, height: 22, borderRadius: 2, backgroundColor: done ? colors.lime : colors.line }} /> : null}
-            </View>
-            <T size={15} w={now ? 'bold' : done ? 'medium' : 'regular'} color={done || now || current < 0 ? colors.ink : colors.faint} style={{ flex: 1, paddingTop: 2 }}>{t}</T>
-          </Row>
-        );
+      {items.map((label, i) => {
+        const done = current < 0 || i < current; const now = i === current;
+        return <StepRow key={i} i={i} label={label} sub={subs?.[i]} done={done} now={now} last={i === items.length - 1} />;
       })}
     </View>
+  );
+}
+function StepRow({ i, label, sub, done, now, last }: { i: number; label: string; sub?: string; done: boolean; now: boolean; last: boolean }) {
+  const pop = useRef(new Animated.Value(done || now ? 0 : 1)).current;
+  const line = useRef(new Animated.Value(done ? 0 : 1)).current;
+  const breath = useRef(new Animated.Value(0)).current;
+  useEffect(() => {
+    const native = Platform.OS !== 'web';
+    if (reducedMotion()) { pop.setValue(1); line.setValue(1); return; }
+    const delay = i * 380;
+    Animated.sequence([Animated.delay(delay), Animated.spring(pop, { toValue: 1, ...spring.bouncy, useNativeDriver: native })]).start();
+    if (done) Animated.sequence([Animated.delay(delay + 160), Animated.timing(line, { toValue: 1, duration: 380, easing: ease.out, useNativeDriver: native })]).start();
+    if (now) {
+      const loop = Animated.loop(Animated.sequence([Animated.timing(breath, { toValue: 1, duration: 1200, easing: ease.inOut, useNativeDriver: native }), Animated.timing(breath, { toValue: 0, duration: 1200, easing: ease.inOut, useNativeDriver: native })]));
+      loop.start(); return () => loop.stop();
+    }
+  }, [i, done, now, pop, line, breath]);
+  return (
+    <Row style={{ alignItems: 'flex-start' }} gap={12}>
+      <View style={{ alignItems: 'center', width: 28 }}>
+        <View style={{ width: 28, height: 28, alignItems: 'center', justifyContent: 'center' }}>
+          {now ? <Animated.View style={{ position: 'absolute', width: 28, height: 28, borderRadius: 14, borderWidth: 2, borderColor: colors.primary, opacity: breath.interpolate({ inputRange: [0, 1], outputRange: [0, 0.5] }), transform: [{ scale: breath.interpolate({ inputRange: [0, 1], outputRange: [0.8, 1.35] }) }] }} /> : null}
+          <Animated.View style={[s.stepNum, done && { backgroundColor: colors.lime }, now && { backgroundColor: colors.surface, borderWidth: 2.5, borderColor: colors.primary }, { transform: [{ scale: pop }] }]}>
+            {done ? <Icon name="checkmark" size={14} color={colors.brand} stroke={3} /> : now ? <View style={{ width: 10, height: 10, borderRadius: 5, backgroundColor: colors.primary }} /> : <T w="bold" size={12} color={colors.faint}>{[tr('١'), tr('٢'), tr('٣'), tr('٤'), tr('٥'), tr('٦')][i]}</T>}
+          </Animated.View>
+        </View>
+        {!last ? (
+          <View style={{ width: 3, height: 26, borderRadius: 2, backgroundColor: colors.line, overflow: 'hidden' }}>
+            {done ? <Animated.View style={{ width: 3, height: 26, backgroundColor: colors.lime, transform: [{ translateY: line.interpolate({ inputRange: [0, 1], outputRange: [-26, 0] }) }] }} /> : null}
+          </View>
+        ) : null}
+      </View>
+      <View style={{ flex: 1, paddingTop: 3, paddingBottom: 6 }}>
+        <T size={15} w={now ? 'bold' : done ? 'medium' : 'regular'} color={done || now ? colors.ink : colors.faint}>{label}</T>
+        {sub ? <Muted size={12.5}>{sub}</Muted> : null}
+      </View>
+    </Row>
   );
 }
 
@@ -496,6 +533,13 @@ export function CopyBox({ text }: { text: string }) {
       <T selectable w="display" size={17} style={{ writingDirection: 'ltr', textAlign: startAlign(), letterSpacing: 0.5 }}>{text}</T>
     </View>
   );
+}
+
+/** Staggered entrance for list items: 16 px up with a soft spring, `i` × 60 ms apart (crossfade under reduced motion). */
+export function Enter({ i = 0, children, style }: { i?: number; children: ReactNode; style?: StyleProp<ViewStyle> }) {
+  const op = useRef(new Animated.Value(0)).current, y = useRef(new Animated.Value(16)).current;
+  useEffect(() => { enter(op, y, Math.min(i, 6) * 60).start(); }, [op, y, i]);
+  return <Animated.View style={[{ opacity: op, transform: [{ translateY: y }] }, style]}>{children}</Animated.View>;
 }
 
 /* ---------------------------------------------------------------- toast */
